@@ -4,7 +4,7 @@ Una herramienta visual para construir newsletters profesionales sin necesidad de
 
 ## 📁 Archivos Incluidos
 
-### 1. `mailing_builder.html`
+### 1. `index.html`
 - **Interfaz principal** del mantenedor de mailings
 - Diseño responsive y moderno
 - Panel izquierdo con secciones disponibles
@@ -47,7 +47,7 @@ Una herramienta visual para construir newsletters profesionales sin necesidad de
 ## 🚀 Cómo Usar
 
 ### 1. **Abrir la Aplicación**
-- Abre `mailing_builder.html` en tu navegador
+- Abre `index.html` en tu navegador
 - Verás la interfaz con el panel izquierdo y área de construcción
 
 ### 2. **Agregar Secciones**

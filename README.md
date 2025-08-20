@@ -1,191 +1,287 @@
 # 🚀 Mantenedor de Mailings - Innk
 
-Una herramienta visual para construir newsletters profesionales sin necesidad de escribir código HTML.
+Un sistema profesional para la gestión de newsletters con sistema de usuarios, secciones maestras y gestión de contenido personalizado.
 
-## 📁 Archivos Incluidos
+## ✨ Características Principales
 
-### 1. `index.html`
-- **Interfaz principal** del mantenedor de mailings
-- Diseño responsive y moderno
-- Panel izquierdo con secciones disponibles
-- Área de construcción visual del newsletter
+### 🔐 Sistema de Autenticación
+- **Login/Registro** de usuarios
+- **Roles diferenciados**: Admin y Usuario
+- **JWT tokens** para sesiones seguras
+- **Gestión de contraseñas** con hash bcrypt
 
-### 2. `mailing_builder.js`
-- **Lógica de funcionamiento** completa
-- Manejo de drag & drop
-- Gestión de secciones
-- Exportación de código HTML
+### ⚙️ Gestión de Secciones Maestras (Solo Admin)
+- **Crear, editar y eliminar** secciones base
+- **Tipos predefinidos**: Header, Saludo, Destacado, Artículos, Eventos, CTA, etc.
+- **Duplicación** de secciones existentes
+- **Soft delete** para mantener integridad de datos
 
-### 3. `README_mailing_builder.md`
-- **Documentación completa** de uso
-- Instrucciones paso a paso
-- Ejemplos de uso
+### 📧 Gestión de Newsletters
+- **Crear newsletters** personalizados
+- **Agregar secciones** desde las maestras
+- **Editar contenido** sin afectar secciones originales
+- **Reordenar secciones** con drag & drop
+- **Duplicar newsletters** existentes
+- **Estados**: Borrador, Publicado, Archivado
 
-## 🎯 Características Principales
+### 🎯 Sistema de Copias Inteligente
+- **Cambios locales**: Las modificaciones en newsletters NO afectan las secciones maestras
+- **Trazabilidad**: Cada newsletter mantiene referencia a su sección original
+- **Personalización**: Contenido único por newsletter
 
-### ✅ Funcionalidades
-- **Construcción visual** de newsletters
-- **Drag & drop** para reordenar secciones
-- **Edición** de secciones existentes
-- **Eliminación** de secciones
-- **Exportación** de código HTML limpio
-- **Interfaz intuitiva** y fácil de usar
+## 🏗️ Arquitectura del Sistema
 
-### 🎨 Secciones Disponibles
-- **Header con Logo**: Logo de Innk y título
-- **Saludo Personalizado**: Mensaje de bienvenida
-- **Destacado**: Contenido destacado con CTA
+### Base de Datos
+```
+users                    # Usuarios del sistema
+├── id, username, email, password_hash, role, is_active
+├── created_at, updated_at
+
+master_sections          # Secciones base (solo admin)
+├── id, name, type, title, content, is_active
+├── created_by, created_at, updated_at
+
+newsletters              # Newsletters de usuarios
+├── id, user_id, name, description, status
+├── created_at, updated_at
+
+newsletter_sections      # Secciones de newsletters (copias)
+├── id, newsletter_id, master_section_id
+├── section_type, title, content, section_order
+├── is_customized, created_at, updated_at
+
+templates                # Plantillas del sistema
+├── id, name, description, content, is_default
+├── created_at
+```
+
+### API Endpoints
+
+#### Autenticación (`/api/auth`)
+- `POST /register` - Registro de usuarios
+- `POST /login` - Login de usuarios
+- `GET /profile` - Perfil del usuario actual
+- `PUT /change-password` - Cambiar contraseña
+
+#### Secciones Maestras (`/api/master-sections`) - Solo Admin
+- `GET /` - Listar todas las secciones
+- `GET /:id` - Obtener sección específica
+- `POST /` - Crear nueva sección
+- `PUT /:id` - Actualizar sección
+- `DELETE /:id` - Eliminar sección (soft delete)
+- `POST /:id/duplicate` - Duplicar sección
+
+#### Newsletters (`/api/newsletters`)
+- `GET /` - Listar newsletters del usuario
+- `GET /:id` - Obtener newsletter con secciones
+- `POST /` - Crear nuevo newsletter
+- `PUT /:id` - Actualizar newsletter
+- `DELETE /:id` - Eliminar newsletter
+- `POST /:id/sections` - Agregar sección al newsletter
+- `PUT /:id/sections/:sectionId` - Editar sección del newsletter
+- `DELETE /:id/sections/:sectionId` - Eliminar sección del newsletter
+- `PUT /:id/sections/reorder` - Reordenar secciones
+- `POST /:id/duplicate` - Duplicar newsletter
+
+## 🚀 Instalación y Configuración
+
+### Prerrequisitos
+- Node.js 14+ 
+- npm o yarn
+
+### 1. Clonar el repositorio
+```bash
+git clone <repository-url>
+cd mantenedor-mailing
+```
+
+### 2. Instalar dependencias
+```bash
+npm install
+```
+
+### 3. Inicializar la base de datos
+```bash
+node init-database.js
+```
+
+### 4. Iniciar el servidor
+```bash
+node server.js
+```
+
+### 5. Acceder a la aplicación
+- **URL**: http://localhost:3001
+- **Usuario Admin**: `admin` / `admin123`
+
+## 👥 Roles y Permisos
+
+### 🔑 Administrador
+- **Acceso completo** a todas las funcionalidades
+- **Gestión de secciones maestras** (crear, editar, eliminar)
+- **Crear y gestionar** newsletters
+- **Acceso a estadísticas** del sistema
+
+### 👤 Usuario
+- **Crear y gestionar** sus propios newsletters
+- **Agregar secciones** desde las maestras disponibles
+- **Personalizar contenido** de sus newsletters
+- **No puede modificar** secciones maestras
+
+## 🎨 Tipos de Secciones Disponibles
+
+### 📋 Secciones Básicas
+- **Header**: Logo y encabezado
+- **Saludo**: Mensaje de bienvenida personalizable
+- **Destacado**: Contenido resaltado con CTA
 - **Artículos**: Lista de artículos recomendados
 - **Eventos**: Próximos eventos y webinars
-- **Call to Action**: Llamada a la acción principal
+- **CTA**: Llamadas a la acción
+- **Footer**: Pie de página con información de contacto
+
+### 📊 Secciones Avanzadas
 - **Dos Columnas - Texto**: Contenido en dos columnas
 - **Dos Columnas - Foto Derecha**: Texto + imagen
 - **Dos Columnas - Foto Izquierda**: Imagen + texto
 - **Dos Columnas - Fotos**: Imágenes en ambas columnas
-- **Footer**: Pie de página con redes sociales
 
-## 🚀 Cómo Usar
+## 🔧 Tecnologías Utilizadas
 
-### 1. **Abrir la Aplicación**
-- Abre `index.html` en tu navegador
-- Verás la interfaz con el panel izquierdo y área de construcción
+### Backend
+- **Node.js** con Express.js
+- **SQLite3** como base de datos
+- **JWT** para autenticación
+- **bcrypt** para hash de contraseñas
 
-### 2. **Agregar Secciones**
-- **Haz clic** en cualquier sección del panel izquierdo
-- La sección se agregará automáticamente al área de construcción
-- Puedes agregar múltiples secciones en cualquier orden
+### Frontend
+- **HTML5** semántico
+- **CSS3** con diseño responsive
+- **JavaScript ES6+** vanilla
+- **Font Awesome** para iconos
 
-### 3. **Reordenar Secciones**
-- **Arrastra y suelta** las secciones para reordenarlas
-- Usa el ícono de arrastre (⋮⋮) en el header de cada sección
-- Las secciones se reorganizan visualmente en tiempo real
+### Características Técnicas
+- **Arquitectura RESTful**
+- **Middleware de autenticación**
+- **Validación de datos**
+- **Manejo de errores robusto**
+- **Diseño responsive** para móviles
 
-### 4. **Editar Secciones**
-- **Haz clic** en el botón ✏️ de cualquier sección
-- Actualmente muestra un alert (se puede expandir para edición completa)
-- Las secciones mantienen su contenido original
+## 📱 Uso del Sistema
 
-### 5. **Eliminar Secciones**
-- **Haz clic** en el botón 🗑️ de cualquier sección
-- Confirma la eliminación
-- La sección se elimina inmediatamente
+### 1. Iniciar Sesión
+- Usar credenciales de admin o crear cuenta nueva
+- El sistema redirige automáticamente según el rol
 
-### 6. **Exportar Código**
-- **Haz clic** en "📋 Generar Código HTML"
-- El código se genera y se copia al portapapeles
-- El código se muestra en el área de salida
+### 2. Gestionar Secciones Maestras (Admin)
+- Navegar a "Secciones Maestras"
+- Crear nuevas secciones con contenido HTML
+- Editar o duplicar secciones existentes
 
-## 🎨 Personalización
+### 3. Crear Newsletter
+- Navegar a "Crear Newsletter"
+- Definir nombre y descripción
+- El sistema crea un newsletter vacío
 
-### **Colores y Estilos**
-- Todas las secciones usan la paleta de colores de Innk
-- CSS inline para máxima compatibilidad con clientes de correo
-- Estilos consistentes en todas las secciones
+### 4. Editar Newsletter
+- Seleccionar newsletter de la lista
+- Agregar secciones desde el panel izquierdo
+- Editar contenido de cada sección
+- Reordenar secciones según necesidad
 
-### **Contenido**
-- Cada sección tiene contenido de ejemplo
-- El contenido se puede personalizar editando el JavaScript
-- Las imágenes usan placeholders que se pueden cambiar
+### 5. Personalizar Contenido
+- Cada sección puede ser editada independientemente
+- Los cambios NO afectan las secciones maestras
+- Sistema de copias inteligente
 
-## 📱 Compatibilidad
+## 🛡️ Seguridad
 
-### **Navegadores**
-- Chrome, Firefox, Safari, Edge (versiones modernas)
-- Responsive design para dispositivos móviles
-- Funciona offline sin dependencias externas
+### Autenticación
+- **JWT tokens** con expiración de 24 horas
+- **Hash de contraseñas** con bcrypt (10 rounds)
+- **Validación de roles** en endpoints sensibles
 
-### **Exportación**
-- **Sin etiquetas HTML/HEAD/BODY** (compatible con Klenty)
-- **CSS inline** para máxima compatibilidad
-- **Estructura de tabla** para clientes de correo antiguos
+### Validación de Datos
+- **Sanitización** de inputs HTML
+- **Validación** de tipos de sección
+- **Verificación** de permisos por usuario
 
-## 🔧 Estructura del Código Exportado
+### Base de Datos
+- **Preparación de queries** para prevenir SQL injection
+- **Soft delete** para mantener integridad referencial
+- **Transacciones** para operaciones críticas
 
-### **Formato de Salida**
-```html
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f4f4f4;">
-    <tr>
-        <td align="center" style="background-color: #f4f4f4; padding: 20px 0;">
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-                <!-- Secciones del newsletter aquí -->
-            </table>
-        </td>
-    </tr>
-</table>
+## 🔄 Flujo de Trabajo Recomendado
+
+### Para Administradores
+1. **Crear secciones maestras** con contenido base
+2. **Revisar y aprobar** secciones creadas
+3. **Mantener** biblioteca de secciones actualizada
+4. **Monitorear** uso de secciones en newsletters
+
+### Para Usuarios
+1. **Crear newsletter** con nombre descriptivo
+2. **Seleccionar secciones** relevantes
+3. **Personalizar contenido** según necesidades
+4. **Revisar y guardar** cambios
+5. **Publicar** cuando esté listo
+
+## 🚨 Solución de Problemas
+
+### Error de Conexión a Base de Datos
+```bash
+# Verificar que la base de datos existe
+ls -la database/
+
+# Recrear la base de datos
+rm -f database/newsletters.db
+node init-database.js
 ```
 
-### **Características del Código**
-- **Estructura de tabla** para compatibilidad
-- **CSS inline** en cada elemento
-- **Sin dependencias** externas
-- **Responsive** para móviles
-- **Compatible** con todos los clientes de correo
+### Error de Autenticación
+- Verificar que el token JWT no haya expirado
+- Hacer logout y login nuevamente
+- Verificar credenciales en la base de datos
 
-## 🚀 Funcionalidades Avanzadas
+### Error de Permisos
+- Verificar que el usuario tenga el rol correcto
+- Solo los administradores pueden gestionar secciones maestras
 
-### **Drag & Drop**
-- Reordenamiento visual de secciones
-- Indicadores visuales durante el arrastre
-- Posicionamiento automático
+## 🔮 Próximas Funcionalidades
 
-### **Gestión de Estado**
-- Contador único para cada sección
-- Persistencia durante la sesión
-- Validación de operaciones
+### Versión 2.0
+- **Sistema de plantillas** avanzado
+- **Preview en tiempo real** de newsletters
+- **Exportación** a HTML, PDF y email
+- **Analytics** de engagement
 
-### **Exportación Inteligente**
-- Generación automática de estructura
-- Código optimizado y limpio
-- Copia automática al portapapeles
-
-## 🎯 Casos de Uso
-
-### **Para Marketing Teams**
-- Crear newsletters rápidamente
-- Prototipar diseños
-- Iterar contenido fácilmente
-
-### **Para Desarrolladores**
-- Generar código HTML base
-- Personalizar plantillas
-- Mantener consistencia visual
-
-### **Para Diseñadores**
-- Visualizar layouts
-- Probar diferentes combinaciones
-- Crear variaciones rápidamente
-
-## 🔮 Futuras Mejoras
-
-### **Funcionalidades Planificadas**
-- **Editor visual** para cada sección
-- **Plantillas predefinidas**
-- **Guardado y carga** de proyectos
-- **Preview en tiempo real**
-- **Integración** con sistemas de email marketing
-
-### **Mejoras Técnicas**
-- **Base de datos** para proyectos
-- **API** para integración
-- **Sistema de usuarios** y permisos
-- **Historial** de versiones
+### Versión 3.0
+- **API pública** para integraciones
+- **Sistema de suscripciones** por email
+- **Automatización** de envíos
+- **Integración** con servicios de email marketing
 
 ## 📞 Soporte
 
-### **Para Ayuda**
-- Revisa este README
-- Consulta el código JavaScript
-- Prueba las funcionalidades paso a paso
+### Documentación
+- Este README contiene toda la información necesaria
+- Los comentarios en el código explican la lógica
 
-### **Reportar Problemas**
-- Verifica la consola del navegador
-- Asegúrate de usar un navegador moderno
-- Confirma que JavaScript esté habilitado
+### Reportar Issues
+- Crear issue en el repositorio
+- Incluir pasos para reproducir el problema
+- Adjuntar logs de error si es posible
 
-## 📝 Licencia
+### Contribuciones
+- Fork del repositorio
+- Crear rama para nueva funcionalidad
+- Enviar pull request con descripción detallada
 
-Esta herramienta está diseñada para uso interno de Innk. Puedes personalizarla según tus necesidades de marca y contenido.
+## 📄 Licencia
+
+Este proyecto está bajo la licencia MIT. Ver el archivo LICENSE para más detalles.
 
 ---
 
-**¡Feliz construcción de newsletters! 🎉** 
+**Desarrollado con ❤️ por el equipo de Innk**
+
+*Sistema profesional para la gestión de newsletters empresariales* 

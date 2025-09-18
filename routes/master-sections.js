@@ -6,12 +6,11 @@ const router = express.Router();
 
 // Aplicar middleware de autenticación a todas las rutas
 router.use(authenticateToken);
-router.use(requireAdmin);
 
 // Obtener todas las secciones maestras
 router.get('/', (req, res) => {
     const query = `
-        SELECT ms.*, u.username as created_by_username 
+        SELECT ms.*, u.username as created_by_username
         FROM master_sections ms 
         LEFT JOIN users u ON ms.created_by = u.id 
         WHERE ms.is_active = 1 
@@ -33,10 +32,13 @@ router.get('/', (req, res) => {
     });
 });
 
+// Las operaciones siguientes requieren permisos de administrador
+router.use(requireAdmin);
+
 // Obtener una sección maestra por ID
 router.get('/:id', (req, res) => {
     const { id } = req.params;
-    
+
     db.get(`
         SELECT ms.*, u.username as created_by_username 
         FROM master_sections ms 

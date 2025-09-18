@@ -465,13 +465,50 @@ class MailingApp {
                 const data = await response.json();
                 this.currentNewsletter = data.newsletter;
                 this.newsletterSections = data.sections;
-                
+
                 document.getElementById('editorTitle').textContent = `Editor: ${data.newsletter.name}`;
                 this.switchView('newsletterEditor');
                 this.renderNewsletterEditor();
             }
         } catch (error) {
             this.showNotification('Error abriendo newsletter', 'error');
+        }
+    }
+
+    async duplicateNewsletter(newsletterId) {
+        if (!newsletterId) {
+            this.showNotification('Newsletter inválido para duplicar', 'error');
+            return;
+        }
+
+        try {
+            const response = await this.apiRequest(`/newsletters/${newsletterId}/duplicate`, {
+                method: 'POST'
+            });
+
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                console.warn('⚠️ No se pudo parsear la respuesta de duplicación:', parseError);
+            }
+
+            if (!response.ok) {
+                const message = data?.error || 'Error duplicando newsletter';
+                this.showNotification(message, 'error');
+                return;
+            }
+
+            this.showNotification('Newsletter duplicado exitosamente', 'success');
+
+            await this.loadNewsletters();
+
+            if (data?.newsletter?.id) {
+                this.openNewsletterEditor(data.newsletter.id);
+            }
+        } catch (error) {
+            console.error('❌ Error duplicando newsletter:', error);
+            this.showNotification('Error duplicando newsletter', 'error');
         }
     }
 

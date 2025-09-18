@@ -474,6 +474,35 @@ class MailingApp {
             this.showNotification('Error abriendo newsletter', 'error');
         }
     }
+
+    // Delete a newsletter by id
+    async deleteNewsletter(newsletterId) {
+        if (!confirm('¿Estás seguro de que quieres eliminar este newsletter? Esta acción no se puede deshacer.')) {
+            return;
+        }
+
+        try {
+            let token = localStorage.getItem('token');
+            let response = await fetch(`/api/newsletters/${newsletterId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            let result = await response.json();
+            // Backend may return { success: true } or { message: '...' }
+            if (result && (result.success || result.message)) {
+                this.showNotification('Newsletter eliminado exitosamente', 'success');
+                this.loadNewsletters(); // refresh list
+            } else {
+                this.showNotification('No se pudo confirmar la eliminación en la respuesta del servidor', 'error');
+            }
+        } catch (error) {
+            this.showNotification('Error eliminando newsletter: ' + error.message, 'error');
+        }
+    }
     
     // Rendering methods
     renderNewsletters(newsletters) {

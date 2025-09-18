@@ -149,7 +149,15 @@ class MailingApp {
         document.getElementById('saveNewsletterBtn').addEventListener('click', () => {
             this.saveNewsletter();
         });
-        
+
+        document.getElementById('previewNewsletterBtn').addEventListener('click', () => {
+            this.previewNewsletter();
+        });
+
+        document.getElementById('copyNewsletterHtmlBtn').addEventListener('click', () => {
+            this.copyNewsletterHtml();
+        });
+
         document.getElementById('backToNewslettersBtn').addEventListener('click', () => {
             this.switchView('newsletters');
         });
@@ -465,13 +473,240 @@ class MailingApp {
                 const data = await response.json();
                 this.currentNewsletter = data.newsletter;
                 this.newsletterSections = data.sections;
-                
+
                 document.getElementById('editorTitle').textContent = `Editor: ${data.newsletter.name}`;
                 this.switchView('newsletterEditor');
                 this.renderNewsletterEditor();
             }
         } catch (error) {
             this.showNotification('Error abriendo newsletter', 'error');
+        }
+    }
+
+    async duplicateNewsletter(newsletterId) {
+        if (!newsletterId) {
+            this.showNotification('Newsletter inválido para duplicar', 'error');
+            return;
+        }
+
+        try {
+            const response = await this.apiRequest(`/newsletters/${newsletterId}/duplicate`, {
+                method: 'POST'
+            });
+
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                console.warn('⚠️ No se pudo parsear la respuesta de duplicación:', parseError);
+            }
+
+            if (!response.ok) {
+                const message = data?.error || 'Error duplicando newsletter';
+                this.showNotification(message, 'error');
+                return;
+            }
+
+            this.showNotification('Newsletter duplicado exitosamente', 'success');
+
+            await this.loadNewsletters();
+
+            if (data?.newsletter?.id) {
+                this.openNewsletterEditor(data.newsletter.id);
+            }
+        } catch (error) {
+            console.error('❌ Error duplicando newsletter:', error);
+            this.showNotification('Error duplicando newsletter', 'error');
+        }
+    }
+
+    generateNewsletterHtml() {
+        if (!this.currentNewsletter) {
+            return null;
+        }
+
+        if (!Array.isArray(this.newsletterSections) || this.newsletterSections.length === 0) {
+            return null;
+        }
+
+        const sectionsHtml = this.newsletterSections
+            .map(section => section?.content?.html || '')
+            .filter(html => html && html.trim().length > 0)
+            .join('\n\n');
+
+        const trimmedSections = sectionsHtml.trim();
+        if (!trimmedSections) {
+            return null;
+        }
+
+        const title = this.escapeHtml(this.currentNewsletter.name || 'Newsletter sin título');
+
+        return `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+</head>
+<body>
+${trimmedSections}
+</body>
+</html>`;
+    }
+
+    previewNewsletter() {
+        if (!this.currentNewsletter) {
+            this.showNotification('No hay newsletter seleccionado para previsualizar', 'warning');
+            return;
+        }
+
+        const htmlDocument = this.generateNewsletterHtml();
+        if (!htmlDocument) {
+            this.showNotification('El newsletter no tiene contenido para previsualizar', 'warning');
+            return;
+        }
+
+        const previewWindow = window.open('', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+
+        if (!previewWindow) {
+            this.showNotification('No se pudo abrir la vista previa. Verifica que no esté bloqueado el popup.', 'error');
+            return;
+        }
+
+        const safeTitle = this.escapeHtml(this.currentNewsletter.name || 'Newsletter');
+
+        previewWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <title>Vista previa - ${safeTitle}</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body {
+                        margin: 0;
+                        background: #f0f2f5;
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        color: #333;
+                    }
+                    .preview-header {
+                        padding: 16px 24px;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+                    }
+                    .preview-header h1 {
+                        margin: 0;
+                        font-size: 1.5rem;
+                        font-weight: 600;
+                    }
+                    .preview-header p {
+                        margin: 0;
+                        font-size: 0.9rem;
+                        opacity: 0.85;
+                    }
+                    .preview-frame {
+                        width: 100%;
+                        height: calc(100vh - 120px);
+                        border: none;
+                        background: white;
+                    }
+                    .preview-footer {
+                        padding: 12px 24px;
+                        font-size: 0.85rem;
+                        color: #555;
+                        background: #ffffff;
+                        border-top: 1px solid #e1e5e9;
+                    }
+                    .preview-footer strong {
+                        color: #444;
+                    }
+                </style>
+            </head>
+            <body>
+                <header class="preview-header">
+                    <h1>Vista previa: ${safeTitle}</h1>
+                    <p>Revisa el contenido tal como se enviará. Para copiar el HTML utiliza el botón "Copiar HTML" en el editor.</p>
+                </header>
+                <iframe id="newsletterPreviewFrame" class="preview-frame" title="Vista previa del newsletter"></iframe>
+                <div class="preview-footer">
+                    <strong>Consejo:</strong> Comprueba la vista previa en diferentes tamaños de ventana para validar el comportamiento responsive.
+                </div>
+            </body>
+            </html>
+        `);
+        previewWindow.document.close();
+
+        let attempts = 0;
+        const assignHtmlToFrame = () => {
+            if (previewWindow.closed) {
+                return;
+            }
+
+            const frame = previewWindow.document.getElementById('newsletterPreviewFrame');
+            if (frame) {
+                frame.srcdoc = htmlDocument;
+            } else if (attempts < 10) {
+                attempts += 1;
+                previewWindow.setTimeout(assignHtmlToFrame, 50);
+            } else {
+                this.showNotification('No se pudo renderizar la vista previa automáticamente', 'warning');
+            }
+        };
+
+        assignHtmlToFrame();
+        previewWindow.focus();
+
+        this.showNotification('Vista previa abierta en una nueva pestaña', 'info');
+    }
+
+    async copyNewsletterHtml() {
+        if (!this.currentNewsletter) {
+            this.showNotification('No hay newsletter seleccionado para copiar', 'warning');
+            return;
+        }
+
+        const htmlDocument = this.generateNewsletterHtml();
+        if (!htmlDocument) {
+            this.showNotification('El newsletter no tiene contenido para copiar', 'warning');
+            return;
+        }
+
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(htmlDocument);
+                this.showNotification('Código HTML copiado al portapapeles', 'success');
+                return;
+            }
+        } catch (error) {
+            console.warn('⚠️ No se pudo copiar usando navigator.clipboard:', error);
+        }
+
+        const textarea = document.createElement('textarea');
+        textarea.value = htmlDocument;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.top = '-9999px';
+        document.body.appendChild(textarea);
+
+        let copySuccessful = false;
+        try {
+            textarea.select();
+            copySuccessful = document.execCommand('copy');
+        } catch (error) {
+            console.warn('⚠️ No se pudo copiar usando execCommand:', error);
+        } finally {
+            document.body.removeChild(textarea);
+        }
+
+        if (copySuccessful) {
+            this.showNotification('Código HTML copiado al portapapeles', 'success');
+        } else {
+            this.showNotification('No se pudo copiar automáticamente. Selecciona y copia manualmente.', 'warning');
         }
     }
 
@@ -1259,10 +1494,23 @@ class MailingApp {
         
         return formattedLines.join('\n');
     }
-    
+
+    escapeHtml(text) {
+        if (typeof text !== 'string') {
+            return '';
+        }
+
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     previewHtmlCode() {
         const html = document.getElementById('sectionContent').value;
-        
+
         if (!html.trim()) {
             this.showNotification('No hay código HTML para previsualizar', 'warning');
             return;

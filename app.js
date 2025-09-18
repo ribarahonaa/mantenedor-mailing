@@ -475,7 +475,7 @@ class MailingApp {
         }
     }
 
-    async duplicateNewsletter(newsletterId) {
+    async duplicateNewsletter(newsletterId, name, description) {
         if (!newsletterId) {
             this.showNotification('Newsletter inválido para duplicar', 'error');
             return;
@@ -483,7 +483,8 @@ class MailingApp {
 
         try {
             const response = await this.apiRequest(`/newsletters/${newsletterId}/duplicate`, {
-                method: 'POST'
+                method: 'POST',
+                body: JSON.stringify({ name, description })
             });
 
             let data = null;
@@ -571,7 +572,7 @@ class MailingApp {
                     <button class="edit-btn" onclick="app.openNewsletterEditor(${newsletter.id})">
                         <i class="fas fa-edit"></i> Editar
                     </button>
-                    <button class="duplicate-btn" onclick="app.duplicateNewsletter(${newsletter.id})">
+                    <button class="duplicate-btn" onclick="app.duplicateNewsletter(${newsletter.id}, '${newsletter.name}', '${newsletter.description}')">
                         <i class="fas fa-copy"></i> Duplicar
                     </button>
                     <button class="delete-btn" onclick="app.deleteNewsletter(${newsletter.id})">

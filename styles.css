@@ -55,9 +55,9 @@ button:focus {
 /* Login Screen */
 .login-screen {
     display: flex;
-    place-content: center;   /* equivale a justify-content + align-content */
-    place-items: center;     /* equivale a align-items + justify-items (en flex alinea cruzado) */
-    min-height: 100dvh;      /* corrige el tema de barras en móviles */
+    justify-content: center; /* centra horizontalmente el contenedor */
+    align-items: center;      /* centra verticalmente el contenedor */
+    min-height: 100dvh;       /* corrige el tema de barras en móviles */
     padding: 20px;
 }
 

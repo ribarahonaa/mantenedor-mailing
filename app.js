@@ -405,16 +405,27 @@ class MailingApp {
     }
     
     async loadMasterSections() {
-        if (this.currentUser.role !== 'admin') return;
-        
         try {
             const response = await this.apiRequest('/master-sections');
-            if (response.ok) {
-                const data = await response.json();
-                this.masterSections = data.sections;
-                this.renderMasterSections(data.sections);
+            if (!response.ok) {
+                if (response.status === 403) {
+                    console.warn('⚠️ Acceso denegado a secciones maestras');
+                } else {
+                    this.showNotification('Error cargando secciones maestras', 'error');
+                }
+                return;
             }
+
+            const data = await response.json();
+            this.masterSections = Array.isArray(data.sections) ? data.sections : [];
+
+            if (this.currentUser.role === 'admin') {
+                this.renderMasterSections(this.masterSections);
+            }
+
+            this.renderAvailableSections();
         } catch (error) {
+            console.error('❌ Error cargando secciones maestras:', error);
             this.showNotification('Error cargando secciones maestras', 'error');
         }
     }
@@ -805,8 +816,11 @@ class MailingApp {
     
     renderAvailableSections() {
         const container = document.getElementById('availableSections');
-        
-        if (!this.masterSections || this.masterSections.length === 0) {
+        if (!container) {
+            return;
+        }
+
+        if (!Array.isArray(this.masterSections) || this.masterSections.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-puzzle-piece"></i>
@@ -815,7 +829,7 @@ class MailingApp {
             `;
             return;
         }
-        
+
         container.innerHTML = this.masterSections.map(section => `
             <div class="available-section" data-section-id="${section.id}">
                 <div class="section-info">

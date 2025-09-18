@@ -149,7 +149,15 @@ class MailingApp {
         document.getElementById('saveNewsletterBtn').addEventListener('click', () => {
             this.saveNewsletter();
         });
-        
+
+        document.getElementById('previewNewsletterBtn').addEventListener('click', () => {
+            this.previewNewsletter();
+        });
+
+        document.getElementById('copyNewsletterHtmlBtn').addEventListener('click', () => {
+            this.copyNewsletterHtml();
+        });
+
         document.getElementById('backToNewslettersBtn').addEventListener('click', () => {
             this.switchView('newsletters');
         });
@@ -1297,10 +1305,23 @@ class MailingApp {
         
         return formattedLines.join('\n');
     }
-    
+
+    escapeHtml(text) {
+        if (typeof text !== 'string') {
+            return '';
+        }
+
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     previewHtmlCode() {
         const html = document.getElementById('sectionContent').value;
-        
+
         if (!html.trim()) {
             this.showNotification('No hay código HTML para previsualizar', 'warning');
             return;

@@ -540,6 +540,22 @@ class MailingApp {
         }
 
         const title = this.escapeHtml(this.currentNewsletter.name || 'Newsletter sin título');
+        const wrapperStyle = [
+            'margin: 0;',
+            'padding: 32px 0;',
+            'width: 100%;',
+            'background-color: #f3f4f6;'
+        ].join(' ');
+        const containerStyle = [
+            'width: 100%;',
+            'max-width: 600px;',
+            'margin: 0 auto;',
+            'background-color: #ffffff;',
+            'box-sizing: border-box;',
+            "font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;",
+            'color: #1f2937;',
+            'line-height: 1.6;'
+        ].join(' ');
 
         return `<!DOCTYPE html>
             <html lang="es">
@@ -549,8 +565,12 @@ class MailingApp {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>${title}</title>
             </head>
-            <body>
-            ${trimmedSections}
+            <body style="margin: 0; padding: 0; background-color: #f3f4f6;">
+                <div style="${wrapperStyle}">
+                    <div style="${containerStyle}">
+                        ${trimmedSections}
+                    </div>
+                </div>
             </body>
             </html>`;
     }
@@ -574,91 +594,9 @@ class MailingApp {
             return;
         }
 
-        const safeTitle = this.escapeHtml(this.currentNewsletter.name || 'Newsletter');
-
-        previewWindow.document.write(`
-            <!DOCTYPE html>
-            <html lang="es">
-            <head>
-                <meta charset="UTF-8">
-                <title>Vista previa - ${safeTitle}</title>
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <style>
-                    body {
-                        margin: 0;
-                        background: #f0f2f5;
-                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                        color: #333;
-                    }
-                    .preview-header {
-                        padding: 16px 24px;
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                        color: white;
-                        display: flex;
-                        flex-direction: column;
-                        gap: 6px;
-                        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-                    }
-                    .preview-header h1 {
-                        margin: 0;
-                        font-size: 1.5rem;
-                        font-weight: 600;
-                    }
-                    .preview-header p {
-                        margin: 0;
-                        font-size: 0.9rem;
-                        opacity: 0.85;
-                    }
-                    .preview-frame {
-                        width: 100%;
-                        height: calc(100vh - 120px);
-                        border: none;
-                        background: white;
-                    }
-                    .preview-footer {
-                        padding: 12px 24px;
-                        font-size: 0.85rem;
-                        color: #555;
-                        background: #ffffff;
-                        border-top: 1px solid #e1e5e9;
-                    }
-                    .preview-footer strong {
-                        color: #444;
-                    }
-                </style>
-            </head>
-            <body>
-                <header class="preview-header">
-                    <h1>Vista previa: ${safeTitle}</h1>
-                    <p>Revisa el contenido tal como se enviará. Para copiar el HTML utiliza el botón "Copiar HTML" en el editor.</p>
-                </header>
-                <iframe id="newsletterPreviewFrame" class="preview-frame" title="Vista previa del newsletter"></iframe>
-                <div class="preview-footer">
-                    <strong>Consejo:</strong> Comprueba la vista previa en diferentes tamaños de ventana para validar el comportamiento responsive.
-                </div>
-            </body>
-            </html>
-        `);
+        previewWindow.document.open();
+        previewWindow.document.write(htmlDocument);
         previewWindow.document.close();
-
-        let attempts = 0;
-        const assignHtmlToFrame = () => {
-            if (previewWindow.closed) {
-                return;
-            }
-
-            const frame = previewWindow.document.getElementById('newsletterPreviewFrame');
-            if (frame) {
-                frame.srcdoc = htmlDocument;
-            } else if (attempts < 10) {
-                attempts += 1;
-                previewWindow.setTimeout(assignHtmlToFrame, 50);
-            } else {
-                this.showNotification('No se pudo renderizar la vista previa automáticamente', 'warning');
-            }
-        };
-
-        assignHtmlToFrame();
         previewWindow.focus();
 
         this.showNotification('Vista previa abierta en una nueva pestaña', 'info');

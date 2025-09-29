@@ -1,0 +1,1589 @@
+/* Reset y estilos base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+/* Utilidades */
+.hidden {
+    display: none !important;
+}
+
+.visible {
+    display: block !important;
+}
+
+/* Estilos globales para botones */
+button {
+    border: none;
+    outline: none;
+    font-family: inherit;
+}
+
+button:focus {
+    outline: none;
+}
+
+/* Estilos específicos para botones de acción */
+.edit-btn, .duplicate-btn, .delete-btn {
+    border: none !important;
+    outline: none !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.edit-btn:hover, .duplicate-btn:hover, .delete-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.edit-btn:active, .duplicate-btn:active, .delete-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Login Screen */
+.login-screen {
+    display: flex;
+    justify-content: center; /* centra horizontalmente el contenedor */
+    align-items: center;      /* centra verticalmente el contenedor */
+    min-height: 100dvh;       /* corrige el tema de barras en móviles */
+    padding: 20px;
+}
+
+.login-container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+}
+
+.login-header {
+    margin-bottom: 30px;
+}
+
+.login-logo {
+    width: 80px;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+.login-header h1 {
+    color: #333;
+    font-size: 28px;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.login-header p {
+    color: #666;
+    font-size: 16px;
+}
+
+.login-tabs {
+    display: flex;
+    background: #f5f5f5;
+    border-radius: 10px;
+    padding: 5px;
+    margin-bottom: 30px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    color: #667eea;
+}
+
+.login-form {
+    display: none;
+    text-align: left;
+}
+
+.login-form.active {
+    display: block;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+}
+
+.login-footer {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e1e5e9;
+    color: #666;
+    font-size: 14px;
+}
+
+.login-footer code {
+    background: #f5f5f5;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+/* Main Application */
+.main-app {
+    min-height: 100vh;
+    background: #f8f9fa;
+}
+
+.main-app.hidden {
+    display: none;
+}
+
+/* Header */
+.app-header {
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-logo {
+    width: 50px;
+    height: auto;
+}
+
+.header-left h1 {
+    color: #333;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #666;
+}
+
+.user-role {
+    background: #667eea;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.logout-btn {
+    padding: 10px 20px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.logout-btn:hover {
+    background: #c82333;
+}
+
+/* Navigation */
+.app-nav {
+    background: white;
+    border-bottom: 1px solid #e1e5e9;
+    padding: 0 30px;
+    display: flex;
+    gap: 10px;
+}
+
+.nav-btn {
+    padding: 15px 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    color: #667eea;
+}
+
+.nav-btn.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+}
+
+.nav-btn.admin-only {
+    display: none;
+}
+
+/* Main Content */
+.app-content {
+    padding: 30px;
+}
+
+.content-view {
+    display: none;
+}
+
+.content-view.active {
+    display: block;
+}
+
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.view-header h2 {
+    color: #333;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+/* Buttons */
+.refresh-btn, .add-btn, .back-btn, .save-btn, .create-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.refresh-btn {
+    background: #17a2b8;
+    color: white;
+}
+
+.refresh-btn:hover {
+    background: #138496;
+}
+
+.add-btn, .create-btn {
+    background: #28a745;
+    color: white;
+}
+
+.add-btn:hover, .create-btn:hover {
+    background: #218838;
+}
+
+.back-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.back-btn:hover {
+    background: #5a6268;
+}
+
+.save-btn {
+    background: #007bff;
+    color: white;
+}
+
+.save-btn:hover {
+    background: #0056b3;
+}
+
+/* Newsletters List */
+.newsletters-list {
+    display: grid;
+    gap: 20px;
+}
+
+.newsletter-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.3s ease;
+}
+
+.newsletter-card:hover {
+    transform: translateY(-2px);
+}
+
+.newsletter-info h3 {
+    color: #333;
+    font-size: 20px;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.newsletter-info p {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.newsletter-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 12px;
+}
+
+.status {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.status.draft {
+    background: #ffeaa7;
+    color: #d63031;
+}
+
+.status.published {
+    background: #55a3ff;
+    color: white;
+}
+
+.status.archived {
+    background: #ddd;
+    color: #666;
+}
+
+.newsletter-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.newsletter-actions button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s ease;
+}
+
+.edit-btn {
+    background: #17a2b8;
+    color: white;
+}
+
+.edit-btn:hover {
+    background: #138496;
+}
+
+.duplicate-btn {
+    background: #ffc107;
+    color: #333;
+}
+
+.duplicate-btn:hover {
+    background: #e0a800;
+}
+
+.delete-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.delete-btn:hover {
+    background: #c82333;
+}
+
+/* Master Sections */
+.master-sections-list {
+    display: grid;
+    gap: 20px;
+}
+
+.master-section-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-info h3 {
+    color: #333;
+    font-size: 18px;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.section-type {
+    color: #667eea;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.section-title {
+    color: #666;
+    font-size: 14px;
+}
+
+.section-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.section-actions button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    min-width: 80px;
+    text-align: center;
+}
+
+.section-actions button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.section-actions button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.section-actions .edit-btn {
+    background: #17a2b8;
+    color: white;
+}
+
+.section-actions .edit-btn:hover {
+    background: #138496;
+}
+
+.section-actions .duplicate-btn {
+    background: #ffc107;
+    color: #333;
+}
+
+.section-actions .duplicate-btn:hover {
+    background: #e0a800;
+}
+
+.section-actions .delete-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.section-actions .delete-btn:hover {
+    background: #c82333;
+}
+
+/* Create Newsletter Form */
+.create-newsletter-form {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+}
+
+/* Newsletter Editor */
+.newsletter-editor {
+    display: flex;
+    height: calc(100vh - 200px);
+    gap: 20px;
+    padding: 20px;
+}
+
+.available-sections {
+    width: 300px;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow-y: auto;
+    max-height: calc(100vh - 300px);
+}
+
+.available-section {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.available-section:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.available-section .section-info h4 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 1rem;
+}
+
+.available-section .section-type {
+    color: #667eea;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin: 0 0 5px 0;
+}
+
+.available-section .section-title {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin: 0 0 15px 0;
+}
+
+.available-section .section-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.available-section .add-section-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    font-weight: 500;
+}
+
+.available-section .add-section-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.available-section .add-section-btn i {
+    font-size: 0.8rem;
+}
+
+.editor-main {
+    flex: 1;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow-y: auto;
+    max-height: calc(100vh - 300px);
+}
+
+.newsletter-container {
+    padding: 20px;
+    min-height: 100%;
+}
+
+.newsletter-section {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.newsletter-section:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+.newsletter-section .section-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.newsletter-section .section-type {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.newsletter-section .section-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.newsletter-section .section-controls button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+}
+
+.newsletter-section .section-controls button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.newsletter-section .section-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #ccc !important;
+    color: #666 !important;
+}
+
+.newsletter-section .section-controls button:disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.newsletter-section .section-content {
+    padding: 20px;
+    background: white;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin: 10px 0;
+    font-size: 1.1rem;
+}
+
+/* Modals */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 25px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.modal-body {
+    padding: 25px;
+}
+
+.modal-footer {
+    padding: 20px 25px;
+    border-top: 1px solid #e1e5e9;
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+}
+
+.cancel-btn {
+    padding: 10px 20px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.cancel-btn:hover {
+    background: #5a6268;
+}
+
+/* Notifications */
+.notifications-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.notification {
+    background: white;
+    border-radius: 8px;
+    padding: 15px 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    min-width: 300px;
+    animation: notificationSlideIn 0.3s ease;
+}
+
+@keyframes notificationSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.notification.success {
+    border-left: 4px solid #28a745;
+}
+
+.notification.error {
+    border-left: 4px solid #dc3545;
+}
+
+.notification.info {
+    border-left: 4px solid #17a2b8;
+}
+
+.notification-message {
+    flex: 1;
+    color: #333;
+    font-weight: 500;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}
+
+.notification-close:hover {
+    background: #f5f5f5;
+}
+
+/* Modal de sección maestra */
+#masterSectionModal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    overflow: auto;
+}
+
+#masterSectionModal .modal-content {
+    background-color: #fefefe;
+    margin: 2% auto;
+    padding: 0;
+    border: none;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 1200px;
+    max-height: 90vh;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+#masterSectionModal .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#masterSectionModal .modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+#masterSectionModal .modal-body {
+    padding: 30px;
+    max-height: calc(90vh - 140px);
+    overflow-y: auto;
+}
+
+#masterSectionModal .form-group {
+    margin-bottom: 25px;
+}
+
+#masterSectionModal .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+#masterSectionModal .form-group input,
+#masterSectionModal .form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: #fff;
+}
+
+#masterSectionModal .form-group input:focus,
+#masterSectionModal .form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+#masterSectionModal .form-help {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+#masterSectionModal .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+#masterSectionModal .form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+/* Editor de código HTML */
+#masterSectionModal .code-editor-container {
+    position: relative;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #1e1e1e;
+}
+
+#masterSectionModal .code-editor-header {
+    background-color: #2d2d30;
+    padding: 8px 16px;
+    border-bottom: 1px solid #3e3e42;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#masterSectionModal .code-editor-header .language-badge {
+    background-color: #007acc;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+#masterSectionModal .code-editor-header .editor-controls {
+    display: flex;
+    gap: 8px;
+}
+
+#masterSectionModal .code-editor-header .editor-controls button {
+    background: none;
+    border: none;
+    color: #ccc;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+#masterSectionModal .code-editor-header .editor-controls button:hover {
+    background-color: #3e3e42;
+    color: white;
+}
+
+#masterSectionModal .code-editor-header .editor-controls button.active {
+    background-color: #007acc;
+    color: white;
+}
+
+#masterSectionModal .code-editor {
+    width: 100%;
+    min-height: 400px;
+    max-height: 500px;
+    padding: 16px;
+    border: none;
+    outline: none;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: vertical;
+    overflow-y: auto;
+}
+
+#masterSectionModal .code-editor:focus {
+    outline: none;
+}
+
+/* Estilos para el resaltado de sintaxis básico */
+#masterSectionModal .code-editor .tag {
+    color: #569cd6;
+}
+
+#masterSectionModal .code-editor .attribute {
+    color: #9cdcfe;
+}
+
+#masterSectionModal .code-editor .value {
+    color: #ce9178;
+}
+
+#masterSectionModal .code-editor .comment {
+    color: #6a9955;
+}
+
+#masterSectionModal .modal-footer {
+    padding: 20px 30px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 12px 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+#masterSectionModal .modal-footer button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#masterSectionModal .modal-footer .cancel-btn {
+    background-color: #6c757d;
+    color: white;
+}
+
+#masterSectionModal .modal-footer .cancel-btn:hover {
+    background-color: #5a6268;
+}
+
+#masterSectionModal .modal-footer .save-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+#masterSectionModal .modal-footer .save-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+/* Modo pantalla completa */
+#masterSectionModal.fullscreen {
+    background-color: #1e1e1e;
+}
+
+#masterSectionModal.fullscreen .modal-content {
+    width: 100%;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+#masterSectionModal.fullscreen .modal-body {
+    flex: 1;
+    max-height: none;
+    overflow: hidden;
+}
+
+#masterSectionModal.fullscreen .code-editor {
+    min-height: 0;
+    max-height: none;
+    flex: 1;
+    height: 100%;
+}
+
+#masterSectionModal.fullscreen .code-editor-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .login-container {
+        padding: 30px 20px;
+        margin: 20px;
+    }
+    
+    .app-header {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .app-nav {
+        padding: 0 20px;
+        overflow-x: auto;
+    }
+    
+    .app-content {
+        padding: 20px;
+    }
+    
+    .newsletter-editor {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .newsletter-card,
+    .master-section-card {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+    
+    .notifications-container {
+        left: 20px;
+        right: 20px;
+    }
+    
+    .notification {
+        min-width: auto;
+    }
+
+    #masterSectionModal .modal-content {
+        width: 95%;
+        margin: 5% auto;
+    }
+    
+    #masterSectionModal .form-row {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    #masterSectionModal .modal-body {
+        padding: 20px;
+    }
+    
+    #masterSectionModal .modal-footer {
+        padding: 15px 20px;
+        flex-direction: column;
+    }
+    
+    #masterSectionModal .modal-footer button {
+        width: 100%;
+    }
+} 
+
+/* Animaciones */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+} 
+
+/* Modal de edición de secciones */
+#sectionEditorModal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    overflow: auto;
+}
+
+#sectionEditorModal .modal-content {
+    background-color: #fefefe;
+    margin: 2% auto;
+    padding: 0;
+    border: none;
+    border-radius: 12px;
+    width: 95%;
+    max-width: 1200px;
+    max-height: 95vh;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+#sectionEditorModal .modal-header {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#sectionEditorModal .modal-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+#sectionEditorModal .modal-body {
+    padding: 30px;
+    max-height: calc(90vh - 140px);
+    overflow-y: auto;
+}
+
+#sectionEditorModal .modal-footer {
+    padding: 20px 30px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 12px 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+#sectionEditorModal .modal-footer button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#sectionEditorModal .modal-footer .cancel-btn {
+    background-color: #6c757d;
+    color: white;
+}
+
+#sectionEditorModal .modal-footer .cancel-btn:hover {
+    background-color: #5a6268;
+}
+
+#sectionEditorModal .modal-footer .save-btn {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    color: white;
+}
+
+#sectionEditorModal .modal-footer .save-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(23, 162, 184, 0.3);
+}
+
+/* Editor de código para el modal de edición de secciones */
+#sectionEditorModal .code-editor-container {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #f8f9fa;
+    margin-bottom: 20px;
+}
+
+#sectionEditorModal .code-editor-header {
+    background: linear-gradient(135deg, #495057 0%, #6c757d 100%);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #dee2e6;
+}
+
+#sectionEditorModal .code-editor-header .language-badge {
+    background-color: #e74c3c;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#sectionEditorModal .code-editor-header .editor-controls {
+    display: flex;
+    gap: 10px;
+}
+
+#sectionEditorModal .code-editor-header .editor-controls button {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#sectionEditorModal .code-editor-header .editor-controls button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+}
+
+#sectionEditorModal .code-editor {
+    width: 100%;
+    min-height: 400px;
+    padding: 20px;
+    border: none;
+    outline: none;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    background-color: #2d3748;
+    color: #e2e8f0;
+    resize: vertical;
+    tab-size: 4;
+}
+
+#sectionEditorModal .code-editor:focus {
+    background-color: #1a202c;
+    box-shadow: inset 0 0 0 2px #4299e1;
+}
+
+/* Estilos para el contenido del modal */
+#sectionEditorModal .form-group {
+    margin-bottom: 25px;
+}
+
+#sectionEditorModal .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+    font-size: 1rem;
+}
+
+#sectionEditorModal .form-group input[type="text"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+#sectionEditorModal .form-group input[type="text"]:focus {
+    border-color: #4299e1;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+/* Modo pantalla completa para el modal de secciones */
+#sectionEditorModal.fullscreen {
+    z-index: 2000;
+}
+
+#sectionEditorModal.fullscreen .modal-content {
+    width: 98%;
+    max-width: none;
+    height: 98vh;
+    max-height: none;
+    margin: 1% auto;
+}
+
+#sectionEditorModal.fullscreen .modal-body {
+    max-height: calc(98vh - 200px);
+}
+
+#sectionEditorModal.fullscreen .code-editor {
+    min-height: 70vh;
+    font-size: 16px;
+}
+
+/* Scroll personalizado */
+.available-sections::-webkit-scrollbar,
+.editor-main::-webkit-scrollbar {
+    width: 8px;
+}
+
+.available-sections::-webkit-scrollbar-track,
+.editor-main::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.available-sections::-webkit-scrollbar-thumb,
+.editor-main::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.available-sections::-webkit-scrollbar-thumb:hover,
+.editor-main::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Para Firefox */
+.available-sections,
+.editor-main {
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+} 
+
+/* Botones del editor de newsletter */
+.newsletter-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 20px;
+}
+
+.newsletter-editor-header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 1.5rem;
+}
+
+.newsletter-editor-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.newsletter-editor-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.newsletter-editor-actions .save-btn {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+.newsletter-editor-actions .save-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+}
+
+.newsletter-editor-actions .save-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.newsletter-editor-actions .preview-btn {
+    background: linear-gradient(135deg, #17a2b8 0%, #0f8ea3 100%);
+    color: white;
+}
+
+.newsletter-editor-actions .preview-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(23, 162, 184, 0.3);
+}
+
+.newsletter-editor-actions .copy-btn {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+}
+
+.newsletter-editor-actions .copy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(73, 80, 87, 0.3);
+}
+
+.newsletter-editor-actions .back-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.newsletter-editor-actions .back-btn:hover {
+    background: #5a6268;
+} 

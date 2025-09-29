@@ -1,0 +1,93 @@
+# Dependencias de Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Archivos de entorno
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Base de datos SQLite
+*.db
+*.sqlite
+*.sqlite3
+database/*.db
+database/*.sqlite
+database/*.sqlite3
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Archivos temporales del sistema
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Archivos de IDE y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Archivos de build y distribución
+dist/
+build/
+coverage/
+
+# Archivos de cache
+.cache/
+.parcel-cache/
+
+# Archivos de respaldo
+*.bak
+*.backup
+*.old
+
+# Archivos de configuración local
+config.local.js
+config.local.json
+
+# Archivos de prueba
+test-results/
+coverage/
+
+# Archivos de sistema operativo
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Archivos de usuario
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Archivos de Node.js específicos
+.npm
+.eslintcache
+.node_repl_history
+.yarn-integrity
+
+# Archivos de base de datos de desarrollo
+dev.db
+test.db
+*.db-journal
+
+# Archivos de respaldo de base de datos
+*.db.backup
+*.sqlite.backup 

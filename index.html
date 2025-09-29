@@ -3,645 +3,294 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mantenedor de Mailings</title>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Epilogue:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Epilogue', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #4A90E2, #7B68EE);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .header h1 {
-            font-family: 'Space Grotesk', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 28px;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-        
-        .container {
-            display: flex;
-            height: calc(100vh - 100px);
-            padding: 20px;
-            gap: 20px;
-        }
-        
-        .sidebar {
-            width: 300px;
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow-y: auto;
-        }
-        
-        .main-content {
-            flex: 1;
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow-y: auto;
-        }
-        
-        .section-item {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .section-item:hover {
-            border-color: #4A90E2;
-            background: #f0f8ff;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.2);
-        }
-        
-        .section-item h3 {
-            font-family: 'Space Grotesk', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #4A90E2;
-            font-size: 16px;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-        
-        .section-item p {
-            font-family: 'Epilogue', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #666;
-            font-size: 14px;
-            margin: 0;
-        }
-        
-        .section-icon {
-            font-size: 24px;
-            margin-right: 10px;
-            float: left;
-        }
-        
-        .newsletter-container {
-            min-height: 600px;
-            border: 2px dashed #ddd;
-            border-radius: 10px;
-            padding: 10px;
-            background: #fafafa;
-        }
-        
-        .newsletter-container.dragover {
-            border-color: #4A90E2;
-            background: #f0f8ff;
-        }
-        
-        .newsletter-section {
-            background: white;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            position: relative;
-            transition: all 0.3s ease;
-        }
-        
-        .newsletter-section:last-child {
-            margin-bottom: 0;
-        }
-        
-        .newsletter-section:hover {
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        
-        .section-header {
-            background: #f8f9fa;
-            padding: 8px 12px;
-            border-bottom: 1px solid #e9ecef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .section-title {
-            font-family: 'Space Grotesk', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-weight: 600;
-            color: #4A90E2;
-        }
-        
-        .section-controls {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .control-btn {
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 4px 8px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: background 0.3s ease;
-        }
-        
-        .control-btn:hover {
-            background: #5a6268;
-        }
-        
-        .control-btn.edit {
-            background: #20B2AA;
-        }
-        
-        .control-btn.edit:hover {
-            background: #1e9b94;
-        }
-        
-        .control-btn.delete {
-            background: #dc3545;
-        }
-        
-        .control-btn.delete:hover {
-            background: #c82333;
-        }
-        
-        .section-content {
-            padding: 0;
-        }
-        
-        .newsletter-preview {
-            background: transparent;
-            border: none;
-            border-radius: 0;
-            padding: 0;
-            margin: 0;
-            box-shadow: none;
-        }
-        
-        .newsletter-preview table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .newsletter-preview td {
-            padding: 0;
-            vertical-align: top;
-        }
-        
-        .newsletter-preview img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-        }
-        
-        .newsletter-preview h1,
-        .newsletter-preview h2,
-        .newsletter-preview h3 {
-            margin: 0 0 15px 0;
-            font-family: 'Space Grotesk', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-weight: 600;
-        }
-        
-        .newsletter-preview p {
-            margin: 0 0 15px 0;
-            font-family: 'Epilogue', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .newsletter-preview ul {
-            margin: 20px 0;
-            padding-left: 25px;
-        }
-        
-        .newsletter-preview li {
-            margin-bottom: 8px;
-            font-family: 'Epilogue', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .newsletter-preview a {
-            text-decoration: none;
-            font-family: 'Epilogue', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .newsletter-preview .cta-button {
-            display: inline-block;
-            padding: 12px 30px;
-            border-radius: 5px;
-            font-weight: bold;
-            text-align: center;
-            margin: 10px 0;
-            font-family: 'Epilogue', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .newsletter-full-preview {
-            background: #f4f4f4;
-            padding: 15px;
-            border-radius: 10px;
-            border: 2px solid #4A90E2;
-        }
-        
-        .newsletter-full-preview table {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        
-        .newsletter-full-preview td {
-            padding: 0;
-        }
-        
-        .newsletter-full-preview .section-content {
-            padding: 0;
-        }
-        
-        .newsletter-full-preview .section-content:first-child {
-            padding-top: 0;
-        }
-        
-        .newsletter-full-preview .section-content:last-child {
-            padding-bottom: 0;
-        }
-        
-        .newsletter-full-preview .newsletter-preview {
-            background: transparent;
-            border: none;
-            box-shadow: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .empty-state {
-            text-align: center;
-            color: #999;
-            padding: 60px 20px;
-        }
-        
-        .empty-state h3 {
-            font-family: 'Space Grotesk', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 24px;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-        
-        .empty-state p {
-            font-family: 'Epilogue', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 16px;
-            margin-bottom: 20px;
-        }
-        
-        .export-section {
-            margin-top: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-        }
-        
-        .export-btn {
-            background: #FF8C00;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 12px 30px;
-            font-size: 16px;
-            font-family: 'Space Grotesk', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-        
-        .export-btn:hover {
-            background: #FF7F50;
-        }
-        
-        .code-output {
-            background: #2d3748;
-            color: #e2e8f0;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-family: 'Epilogue', 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.5;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            display: none;
-        }
-        
-        .drag-handle {
-            cursor: move;
-            padding: 5px;
-            color: #999;
-            font-size: 18px;
-        }
-        
-        .section-placeholder {
-            height: 20px;
-            background: #e9ecef;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
-        
-        .section-placeholder.dragover {
-            background: #4A90E2;
-            height: 40px;
-        }
-        
-        /* Estilos del Modal de Edición */
-        .edit-modal {
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
-        }
-        
-        .edit-modal-content {
-            background-color: #ffffff;
-            margin: 5% auto;
-            padding: 0;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            animation: modalSlideIn 0.3s ease-out;
-        }
-        
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .edit-modal-header {
-            background: linear-gradient(135deg, #4A90E2, #7B68EE);
-            color: white;
-            padding: 20px;
-            border-radius: 10px 10px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .edit-modal-header h3 {
-            font-family: 'Space Grotesk', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-weight: 600;
-            margin: 0;
-            font-size: 20px;
-        }
-        
-        .edit-modal-close {
-            color: white;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            line-height: 1;
-        }
-        
-        .edit-modal-close:hover {
-            opacity: 0.8;
-        }
-        
-        .edit-modal-body {
-            padding: 20px;
-        }
-        
-        .edit-modal-footer {
-            padding: 20px;
-            border-top: 1px solid #e9ecef;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-        
-        .edit-form-group {
-            margin-bottom: 20px;
-        }
-        
-        .edit-form-group label {
-            display: block;
-            font-family: 'Space Grotesk', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-weight: 600;
-            color: #4A90E2;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-        
-        .edit-form-group input,
-        .edit-form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-family: 'Epilogue', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 14px;
-            transition: border-color 0.3s ease;
-        }
-        
-        .edit-form-group input:focus,
-        .edit-form-group textarea:focus {
-            outline: none;
-            border-color: #4A90E2;
-            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
-        }
-        
-        .edit-form-group textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-        
-        .edit-form-group .image-preview {
-            margin-top: 10px;
-            text-align: center;
-        }
-        
-        .edit-form-group .image-preview img {
-            max-width: 200px;
-            max-height: 150px;
-            border-radius: 8px;
-            border: 2px solid #e9ecef;
-        }
-        
-        .edit-form-group .url-input {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        
-        .edit-form-group .url-input input {
-            flex: 1;
-        }
-        
-        .edit-form-group .url-input button {
-            background: #20B2AA;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 8px 12px;
-            cursor: pointer;
-            font-family: 'Epilogue', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 12px;
-        }
-        
-        .edit-form-group .url-input button:hover {
-            background: #1e9b94;
-        }
-    </style>
+    <title>Mantenedor de Mailings - Innk</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="header">
-        <h1>🚀 Mantenedor de Mailings</h1>
-        <p>Construye newsletters profesionales de forma visual</p>
-    </div>
-    
-    <div class="container">
-        <!-- Sidebar con secciones disponibles -->
-        <div class="sidebar">
-            <h2 style="color: #4A90E2; margin-bottom: 20px; text-align: center; font-family: 'Space Grotesk', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: 600;">📋 Secciones Disponibles</h2>
-            
-            <div class="section-item" data-section="header">
-                <div class="section-icon">🏢</div>
-                <h3>Header con Logo</h3>
-                <p>Encabezado con logo de Innk y título</p>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>Mantenedor de Mailings</h1>
+                <p>Gestiona tus newsletters y secciones de manera profesional</p>
             </div>
             
-            <div class="section-item" data-section="saludo">
-                <div class="section-icon">👋</div>
-                <h3>Saludo Personalizado</h3>
-                <p>Mensaje de bienvenida personalizable</p>
+            <div class="login-tabs">
+                <button class="tab-btn active" data-tab="login">Iniciar Sesión</button>
+                <button class="tab-btn" data-tab="register">Registrarse</button>
             </div>
             
-            <div class="section-item" data-section="destacado">
-                <div class="section-icon">🔥</div>
-                <h3>Destacado</h3>
-                <p>Contenido destacado con CTA</p>
-            </div>
+            <!-- Login Form -->
+            <form id="loginForm" class="login-form active">
+                <div class="form-group">
+                    <label for="loginUsername">Usuario</label>
+                    <input type="text" id="loginUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Contraseña</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                </button>
+            </form>
             
-            <div class="section-item" data-section="articulos">
-                <div class="section-icon">📚</div>
-                <h3>Artículos</h3>
-                <p>Lista de artículos recomendados</p>
-            </div>
+            <!-- Register Form -->
+            <form id="registerForm" class="login-form">
+                <div class="form-group">
+                    <label for="registerUsername">Usuario</label>
+                    <input type="text" id="registerUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Contraseña</label>
+                    <input type="password" id="registerPassword" required minlength="6">
+                </div>
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-user-plus"></i> Registrarse
+                </button>
+            </form>
             
-            <div class="section-item" data-section="eventos">
-                <div class="section-icon">📅</div>
-                <h3>Eventos</h3>
-                <p>Próximos eventos y webinars</p>
-            </div>
-            
-            <div class="section-item" data-section="cta">
-                <div class="section-icon">🎯</div>
-                <h3>Call to Action</h3>
-                <p>Llamada a la acción principal</p>
-            </div>
-            
-            <div class="section-item" data-section="dos-columnas-texto">
-                <div class="section-icon">📊</div>
-                <h3>Dos Columnas - Texto</h3>
-                <p>Contenido en dos columnas solo texto</p>
-            </div>
-            
-            <div class="section-item" data-section="dos-columnas-foto-derecha">
-                <div class="section-icon">🖼️</div>
-                <h3>Dos Columnas - Foto Derecha</h3>
-                <p>Texto a la izquierda, imagen a la derecha</p>
-            </div>
-            
-            <div class="section-item" data-section="dos-columnas-foto-izquierda">
-                <div class="section-icon">🖼️</div>
-                <h3>Dos Columnas - Foto Izquierda</h3>
-                <p>Imagen a la izquierda, texto a la derecha</p>
-            </div>
-            
-            <div class="section-item" data-section="dos-columnas-fotos">
-                <div class="section-icon">📸</div>
-                <h3>Dos Columnas - Fotos</h3>
-                <p>Imágenes en ambas columnas</p>
-            </div>
-            
-            <div class="section-item" data-section="footer">
-                <div class="section-icon">📧</div>
-                <h3>Footer</h3>
-                <p>Pie de página con redes sociales</p>
+            <div class="login-footer">
+                <p></p>
             </div>
         </div>
-        
-        <!-- Área principal de construcción -->
-        <div class="main-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="color: #4A90E2; margin: 0; font-family: 'Space Grotesk', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: 600;">📝 Constructor de Newsletter</h2>
-                <div style="display: flex; gap: 10px;">
-                    <button id="viewModeBtn" class="control-btn edit" style="padding: 8px 16px; font-size: 14px;" onclick="mailingBuilder.toggleViewMode()">
-                        👁️ Vista Previa
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="main-app hidden">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <h1>Mantenedor de Mailings</h1>
+            </div>
+            <div class="header-right">
+                <span class="user-info">
+                    <i class="fas fa-user"></i>
+                    <span id="currentUsername">Usuario</span>
+                    <span id="userRole" class="user-role">user</span>
+                </span>
+                <button id="logoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="app-nav">
+            <button class="nav-btn active" data-view="newsletters">
+                <i class="fas fa-newspaper"></i> Mis Newsletters
+            </button>
+            <button class="nav-btn admin-only" data-view="masterSections">
+                <i class="fas fa-puzzle-piece"></i> Secciones Maestras
+            </button>
+            <button class="nav-btn" data-view="createNewsletter">
+                <i class="fas fa-plus"></i> Crear Newsletter
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="app-content">
+            <!-- Newsletters List View -->
+            <div id="newslettersView" class="content-view active">
+                <div class="view-header">
+                    <h2>Mis Newsletters</h2>
+                    <button id="refreshNewslettersBtn" class="refresh-btn">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+                
+                <div id="newslettersList" class="newsletters-list">
+                    <!-- Newsletters se cargarán aquí -->
+                </div>
+            </div>
+
+            <!-- Master Sections View (Admin Only) -->
+            <div id="masterSectionsView" class="content-view">
+                <div class="view-header">
+                    <h2>Gestión de Secciones Maestras</h2>
+                    <button id="addMasterSectionBtn" class="add-btn">
+                        <i class="fas fa-plus"></i> Nueva Sección
+                    </button>
+                </div>
+                
+                <div id="masterSectionsList" class="master-sections-list">
+                    <!-- Secciones maestras se cargarán aquí -->
+                </div>
+            </div>
+
+            <!-- Create Newsletter View -->
+            <div id="createNewsletterView" class="content-view">
+                <div class="view-header">
+                    <h2>Crear Nuevo Newsletter</h2>
+                    <button id="backToNewslettersBtn" class="back-btn">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </button>
+                </div>
+                
+                <div class="create-newsletter-form">
+                    <div class="form-group">
+                        <label for="newsletterName">Nombre del Newsletter</label>
+                        <input type="text" id="newsletterName" placeholder="Ej: Newsletter Mensual" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newsletterDescription">Descripción</label>
+                        <textarea id="newsletterDescription" placeholder="Descripción del newsletter..."></textarea>
+                    </div>
+                    <button id="createNewsletterBtn" class="create-btn">
+                        <i class="fas fa-save"></i> Crear Newsletter
                     </button>
                 </div>
             </div>
-            
-            <div class="newsletter-container" id="newsletterContainer">
-                <div class="empty-state">
-                    <h3>🎯 Comienza a construir tu newsletter</h3>
-                    <p>Haz clic en las secciones del panel izquierdo para agregarlas aquí</p>
-                    <p>Puedes arrastrar y soltar para reordenar las secciones</p>
+
+            <!-- Newsletter Editor View -->
+            <div id="newsletterEditorView" class="content-view">
+                <div class="view-header">
+                    <h2 id="editorTitle">Editor de Newsletter</h2>
+                    <div class="newsletter-editor-actions">
+                        <button id="saveNewsletterBtn" class="save-btn">
+                            <i class="fas fa-save"></i> Guardar
+                        </button>
+                        <button id="previewNewsletterBtn" class="preview-btn">
+                            <i class="fas fa-eye"></i> Vista Previa
+                        </button>
+                        <button id="copyNewsletterHtmlBtn" class="copy-btn">
+                            <i class="fas fa-code"></i> Copiar HTML
+                        </button>
+                        <button id="backToNewslettersFromEditorBtn" class="back-btn">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="newsletter-editor">
+                    <div class="editor-sidebar">
+                        <h3>Secciones Disponibles</h3>
+                        <div id="availableSections" class="available-sections">
+                            <!-- Secciones disponibles se cargarán aquí -->
+                        </div>
+                    </div>
+                    
+                    <div class="editor-main">
+                        <div id="newsletterContainer" class="newsletter-container">
+                            <div class="empty-state">
+                                <i class="fas fa-plus-circle"></i>
+                                <p>Arrastra secciones aquí para construir tu newsletter</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    
+    <!-- Modal de Sección Maestra -->
+    <div id="masterSectionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="masterSectionModalTitle">Nueva Sección Maestra</h2>
+                <button class="modal-close">&times;</button>
+            </div>
             
-            <!-- Sección de exportación -->
-            <div class="export-section">
-                <h3 style="color: #4A90E2; margin-bottom: 15px; font-family: 'Space Grotesk', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: 600;">💾 Exportar Código</h3>
-                <button class="export-btn" onclick="exportCode()">📋 Generar Código HTML</button>
-                <div class="code-output" id="codeOutput"></div>
+            <div class="modal-body">
+                <form id="masterSectionForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="sectionName">Nombre de la Sección</label>
+                            <input type="text" id="sectionName" placeholder="Ej: Encabezado Principal" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sectionType">Tipo de Sección</label>
+                            <select id="sectionType" required>
+                                <option value="">Selecciona un tipo</option>
+                                <option value="header">Encabezado</option>
+                                <option value="content">Contenido</option>
+                                <option value="image">Imagen</option>
+                                <option value="button">Botón</option>
+                                <option value="divider">Separador</option>
+                                <option value="footer">Pie de página</option>
+                                <option value="social">Redes Sociales</option>
+                                <option value="gallery">Galería</option>
+                                <option value="testimonial">Testimonio</option>
+                                <option value="pricing">Precios</option>
+                                <option value="contact">Contacto</option>
+                                <option value="custom">Personalizado</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sectionTitle">Título de la Sección</label>
+                        <input type="text" id="sectionTitle" placeholder="Ej: Bienvenido a Nuestro Newsletter" required>
+                        </div>
+                    
+                    <div class="form-group">
+                        <label for="sectionContent">Contenido HTML</label>
+                        <div class="code-editor-container">
+                            <div class="code-editor-header">
+                                <span class="language-badge">HTML</span>
+                                <div class="editor-controls">
+                                    <button type="button" id="formatHtmlBtn" title="Formatear HTML">
+                                        <i class="fas fa-code"></i> Formatear
+                                    </button>
+                                    <button type="button" id="previewHtmlBtn" title="Vista previa">
+                                        <i class="fas fa-eye"></i> Vista Previa
+                                    </button>
+                                    <button type="button" id="fullscreenBtn" title="Pantalla completa">
+                                        <i class="fas fa-expand"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <textarea id="sectionContent" class="code-editor" placeholder="Escribe tu código HTML aquí..."></textarea>
+                        </div>
+                        <small class="form-help">Usa el editor para escribir código HTML válido. Puedes usar etiquetas como &lt;h1&gt;, &lt;p&gt;, &lt;img&gt;, etc.</small>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" id="cancelMasterSectionBtn" class="cancel-btn">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" id="saveMasterSectionBtn" class="save-btn">
+                    <i class="fas fa-save"></i> Guardar
+                    </button>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Edición -->
-    <div id="editModal" class="edit-modal" style="display: none;">
-        <div class="edit-modal-content">
-            <div class="edit-modal-header">
-                <h3 id="editModalTitle">Editar Sección</h3>
-                <span class="edit-modal-close" onclick="closeEditModal()">&times;</span>
+    <!-- Section Editor Modal -->
+    <div id="sectionEditorModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="sectionEditorModalTitle">Editar Sección</h3>
+                <button class="modal-close">&times;</button>
             </div>
-            <div class="edit-modal-body">
-                <div id="editFormContainer">
-                    <!-- El formulario se generará dinámicamente aquí -->
+            <div class="modal-body">
+                <div id="sectionEditorContent">
+                    <!-- El contenido del editor se generará dinámicamente -->
                 </div>
             </div>
-            <div class="edit-modal-footer">
-                <button class="control-btn edit" onclick="saveEditChanges()">💾 Guardar</button>
-                <button class="control-btn delete" onclick="closeEditModal()">❌ Cancelar</button>
+            <div class="modal-footer">
+                <button id="saveSectionBtn" class="save-btn">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+                <button id="cancelSectionBtn" class="cancel-btn">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
             </div>
         </div>
     </div>
 
-    <script src="mailing_builder.js"></script>
+    <!-- Notifications Container -->
+    <div id="notificationsContainer" class="notifications-container"></div>
+
+    <script src="app.js"></script>
 </body>
 </html> 

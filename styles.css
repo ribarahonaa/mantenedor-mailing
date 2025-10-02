@@ -10,15 +10,26 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     color: #333;
+    overflow-x: hidden;
+    position: relative;
+}
+
+body.app-active {
+    background: #f8f9fa;
 }
 
 /* Utilidades */
 .hidden {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 .visible {
     display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* Estilos globales para botones */
@@ -54,11 +65,19 @@ button:focus {
 
 /* Login Screen */
 .login-screen {
-    display: flex;
-    justify-content: center; /* centra horizontalmente el contenedor */
-    align-items: center;      /* centra verticalmente el contenedor */
-    min-height: 100dvh;       /* corrige el tema de barras en móviles */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-height: 100vh;
+    width: 100%;
     padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    z-index: 999;
 }
 
 .login-container {
@@ -69,6 +88,8 @@ button:focus {
     width: 100%;
     max-width: 450px;
     text-align: center;
+    position: relative;
+    margin: 0 auto;
 }
 
 .login-header {
@@ -191,12 +212,22 @@ button:focus {
 
 /* Main Application */
 .main-app {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
     min-height: 100vh;
     background: #f8f9fa;
+    overflow-y: auto;
+    z-index: 1;
 }
 
 .main-app.hidden {
-    display: none;
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
 }
 
 /* Header */

@@ -1,12 +1,12 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { db } = require('../database/database');
+const { query } = require('../database/database');
 
 const router = express.Router();
 
 // Clave secreta para JWT (en producción usar variable de entorno)
-const JWT_SECRET = 'innk-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET || 'innk-secret-key-2024';
 
 // Middleware para verificar token JWT
 const authenticateToken = (req, res, next) => {
@@ -49,65 +49,70 @@ router.post('/register', async (req, res) => {
         }
 
         // Verificar si el usuario ya existe
-        db.get('SELECT id FROM users WHERE username = ? OR email = ?', [username, email], async (err, row) => {
-            if (err) {
-                return res.status(500).json({ error: 'Error en la base de datos' });
-            }
+        const existingUser = await query(
+            'SELECT id FROM users WHERE username = $1 OR email = $2',
+            [username, email]
+        );
 
-            if (row) {
-                return res.status(400).json({ error: 'El usuario o email ya existe' });
-            }
+        if (existingUser.rows.length > 0) {
+            return res.status(400).json({ error: 'El usuario o email ya existe' });
+        }
 
-            // Hash de la contraseña
-            const passwordHash = await bcrypt.hash(password, 10);
+        // Hash de la contraseña
+        const passwordHash = await bcrypt.hash(password, 10);
 
-            // Crear usuario
-            db.run('INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)', 
-                [username, email, passwordHash, 'user'], function(err) {
-                    if (err) {
-                        return res.status(500).json({ error: 'Error creando usuario' });
-                    }
+        // Crear usuario
+        const result = await query(
+            'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, role',
+            [username, email, passwordHash]
+        );
 
-                    // Generar token JWT
-                    const token = jwt.sign(
-                        { id: this.lastID, username, role: 'user' },
-                        JWT_SECRET,
-                        { expiresIn: '24h' }
-                    );
+        const user = result.rows[0];
 
-                    res.json({
-                        message: 'Usuario creado exitosamente',
-                        user: { id: this.lastID, username, email, role: 'user' },
-                        token
-                    });
-                });
+        // Generar token JWT
+        const token = jwt.sign(
+            { id: user.id, username: user.username, role: user.role },
+            JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.status(201).json({
+            message: 'Usuario registrado exitosamente',
+            user: { id: user.id, username: user.username, email: user.email, role: user.role },
+            token
         });
+
     } catch (error) {
+        console.error('Error en registro:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
 // Login de usuarios
-router.post('/login', (req, res) => {
-    const { username, password } = req.body;
+router.post('/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
 
-    if (!username || !password) {
-        return res.status(400).json({ error: 'Usuario y contraseña son requeridos' });
-    }
-
-    // Buscar usuario
-    db.get('SELECT * FROM users WHERE username = ? AND is_active = 1', [username], async (err, user) => {
-        if (err) {
-            return res.status(500).json({ error: 'Error en la base de datos' });
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Usuario y contraseña son requeridos' });
         }
 
-        if (!user) {
+        // Buscar usuario
+        const result = await query(
+            'SELECT * FROM users WHERE username = $1 AND is_active = true',
+            [username]
+        );
+
+        if (result.rows.length === 0) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
+        const user = result.rows[0];
+
         // Verificar contraseña
-        const validPassword = await bcrypt.compare(password, user.password_hash);
-        if (!validPassword) {
+        const isValidPassword = await bcrypt.compare(password, user.password_hash);
+
+        if (!isValidPassword) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
@@ -120,30 +125,35 @@ router.post('/login', (req, res) => {
 
         res.json({
             message: 'Login exitoso',
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                role: user.role
-            },
+            user: { id: user.id, username: user.username, email: user.email, role: user.role },
             token
         });
-    });
+
+    } catch (error) {
+        console.error('Error en login:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
 });
 
 // Obtener perfil del usuario actual
-router.get('/profile', authenticateToken, (req, res) => {
-    db.get('SELECT id, username, email, role, created_at FROM users WHERE id = ?', [req.user.id], (err, user) => {
-        if (err) {
-            return res.status(500).json({ error: 'Error en la base de datos' });
-        }
+router.get('/profile', authenticateToken, async (req, res) => {
+    try {
+        const result = await query(
+            'SELECT id, username, email, role, created_at FROM users WHERE id = $1',
+            [req.user.id]
+        );
 
-        if (!user) {
+        if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
+        const user = result.rows[0];
         res.json({ user });
-    });
+
+    } catch (error) {
+        console.error('Error obteniendo perfil:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
 });
 
 // Cambiar contraseña
@@ -152,7 +162,7 @@ router.put('/change-password', authenticateToken, async (req, res) => {
         const { currentPassword, newPassword } = req.body;
 
         if (!currentPassword || !newPassword) {
-            return res.status(400).json({ error: 'Contraseña actual y nueva son requeridas' });
+            return res.status(400).json({ error: 'Contraseña actual y nueva contraseña son requeridas' });
         }
 
         if (newPassword.length < 6) {
@@ -160,33 +170,39 @@ router.put('/change-password', authenticateToken, async (req, res) => {
         }
 
         // Obtener usuario actual
-        db.get('SELECT password_hash FROM users WHERE id = ?', [req.user.id], async (err, user) => {
-            if (err) {
-                return res.status(500).json({ error: 'Error en la base de datos' });
-            }
+        const result = await query(
+            'SELECT password_hash FROM users WHERE id = $1',
+            [req.user.id]
+        );
 
-            // Verificar contraseña actual
-            const validPassword = await bcrypt.compare(currentPassword, user.password_hash);
-            if (!validPassword) {
-                return res.status(401).json({ error: 'Contraseña actual incorrecta' });
-            }
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
 
-            // Hash de la nueva contraseña
-            const newPasswordHash = await bcrypt.hash(newPassword, 10);
+        const user = result.rows[0];
 
-            // Actualizar contraseña
-            db.run('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
-                [newPasswordHash, req.user.id], function(err) {
-                    if (err) {
-                        return res.status(500).json({ error: 'Error actualizando contraseña' });
-                    }
+        // Verificar contraseña actual
+        const isValidPassword = await bcrypt.compare(currentPassword, user.password_hash);
 
-                    res.json({ message: 'Contraseña actualizada exitosamente' });
-                });
-        });
+        if (!isValidPassword) {
+            return res.status(401).json({ error: 'Contraseña actual incorrecta' });
+        }
+
+        // Hash de la nueva contraseña
+        const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+        // Actualizar contraseña
+        await query(
+            'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+            [newPasswordHash, req.user.id]
+        );
+
+        res.json({ message: 'Contraseña actualizada exitosamente' });
+
     } catch (error) {
+        console.error('Error cambiando contraseña:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
-module.exports = { router, authenticateToken, requireAdmin, JWT_SECRET }; 
+module.exports = { router, authenticateToken, requireAdmin };

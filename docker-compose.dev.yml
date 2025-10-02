@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: newsletters-postgres-dev
+    environment:
+      POSTGRES_DB: newsletters
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"  # Cambiado a 5434 para evitar conflictos
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: newsletters-app-dev
+    ports:
+      - "3001:3001"
+    environment:
+      DB_HOST: postgres
+      DB_NAME: newsletters
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_PORT: 5432
+      JWT_SECRET: dev_jwt_secret_key
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+
+volumes:
+  postgres_dev_data:

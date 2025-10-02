@@ -87,6 +87,7 @@ templates                # Plantillas del sistema
 
 ### Prerrequisitos
 - Node.js 14+ 
+- PostgreSQL 12+
 - npm o yarn
 
 ### 1. Clonar el repositorio
@@ -100,19 +101,189 @@ cd mantenedor-mailing
 npm install
 ```
 
-### 3. Inicializar la base de datos
+### 3. Configurar PostgreSQL
+```bash
+# Crear base de datos
+sudo -u postgres createdb newsletters
+
+# Crear usuario (opcional)
+sudo -u postgres createuser --interactive
+```
+
+### 4. Configurar variables de entorno
+```bash
+# Copiar archivo de ejemplo
+cp env.example .env
+
+# Editar configuración
+nano .env
+```
+
+Configuración mínima en `.env`:
+```env
+DB_USER=postgres
+DB_HOST=localhost
+DB_NAME=newsletters
+DB_PASSWORD=tu_password_postgres
+DB_PORT=5432
+JWT_SECRET=tu_jwt_secret_muy_seguro_aqui
+```
+
+### 5. Inicializar la base de datos
 ```bash
 node init-database.js
 ```
 
-### 4. Iniciar el servidor
+### 6. Iniciar el servidor
 ```bash
 node server.js
 ```
 
-### 5. Acceder a la aplicación
+### 7. Acceder a la aplicación
 - **URL**: http://localhost:3001
 - **Usuario Admin**: `admin` / `admin123`
+
+## 🔄 Migración desde SQLite
+
+Si tienes datos existentes en SQLite y quieres migrarlos a PostgreSQL:
+
+### 1. Preparar PostgreSQL
+```bash
+# Asegúrate de que PostgreSQL esté configurado y funcionando
+sudo systemctl status postgresql
+```
+
+### 2. Ejecutar migración
+```bash
+# Ejecutar script de migración
+node migrate-to-postgres.js
+```
+
+### 3. Verificar migración
+```bash
+# Verificar que los datos se migraron correctamente
+psql -U postgres -d newsletters -c "SELECT COUNT(*) FROM users;"
+```
+
+**Nota**: El script de migración preserva todos los datos existentes y mantiene las relaciones entre tablas.
+
+## 🐳 Instalación con Docker
+
+Para una instalación rápida usando Docker (recomendado):
+
+### 1. Setup Automático con Docker
+```bash
+# Clonar el repositorio
+git clone <repository-url>
+cd mantenedor-mailing
+
+# Usar el gestor de Docker (recomendado)
+chmod +x docker-manager.sh
+./docker-manager.sh start
+```
+
+### 2. Setup Manual con Docker Compose
+```bash
+# Iniciar servicios de producción
+docker-compose up -d
+
+# O iniciar servicios de desarrollo
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+### 3. Acceder a la aplicación
+- **URL**: http://localhost:3001
+- **Usuario Admin**: `admin` / `admin123`
+
+### 4. Comandos Docker útiles
+```bash
+# Ver logs
+./docker-manager.sh logs
+
+# Abrir shell en la aplicación
+./docker-manager.sh shell
+
+# Abrir shell de PostgreSQL
+./docker-manager.sh db-shell
+
+# Crear backup de la base de datos
+./docker-manager.sh backup
+
+# Ver estado de los servicios
+./docker-manager.sh status
+
+# Detener servicios
+./docker-manager.sh stop
+```
+
+### 5. Gestión completa con Docker Manager
+El script `docker-manager.sh` proporciona comandos convenientes:
+
+```bash
+./docker-manager.sh help  # Ver todos los comandos disponibles
+```
+
+**Comandos principales:**
+- `start` - Iniciar en producción
+- `dev` - Iniciar en desarrollo
+- `stop` - Detener servicios
+- `logs` - Ver logs
+- `backup` - Crear backup
+- `clean` - Limpiar Docker
+
+### 6. Ventajas de usar Docker
+
+**🐳 Consistencia**
+- Mismo entorno en desarrollo y producción
+- No hay problemas de "funciona en mi máquina"
+- Configuración automática de PostgreSQL
+
+**⚡ Rapidez**
+- Setup en menos de 2 minutos
+- No necesitas instalar PostgreSQL localmente
+- Inicialización automática de la base de datos
+
+**🔒 Aislamiento**
+- Contenedores aislados del sistema host
+- Fácil limpieza y reinstalación
+- Múltiples versiones sin conflictos
+
+**📦 Portabilidad**
+- Funciona en cualquier sistema con Docker
+- Fácil deployment en servidores
+- Backup y restore simplificado
+
+### 7. Probar la Instalación
+```bash
+# Ejecutar pruebas automáticas
+chmod +x test-docker.sh
+./test-docker.sh
+```
+
+Este script verifica que:
+- Docker y Docker Compose están instalados
+- Las imágenes se construyen correctamente
+- Los servicios se inician sin errores
+- PostgreSQL está funcionando
+- La aplicación responde
+- La base de datos tiene las tablas correctas
+- El usuario admin existe y puede hacer login
+
+## ⚡ Setup Rápido
+
+Para una configuración automática:
+
+```bash
+# Ejecutar script de setup
+chmod +x setup.sh
+./setup.sh
+```
+
+El script automáticamente:
+- Instala PostgreSQL si es necesario
+- Configura variables de entorno
+- Crea la base de datos
+- Inicializa los datos por defecto
 
 ## 👥 Roles y Permisos
 
@@ -149,7 +320,7 @@ node server.js
 
 ### Backend
 - **Node.js** con Express.js
-- **SQLite3** como base de datos
+- **PostgreSQL** como base de datos
 - **JWT** para autenticación
 - **bcrypt** para hash de contraseñas
 
@@ -227,14 +398,40 @@ node server.js
 
 ## 🚨 Solución de Problemas
 
-### Error de Conexión a Base de Datos
+### Error de Conexión a PostgreSQL
 ```bash
-# Verificar que la base de datos existe
-ls -la database/
+# Verificar que PostgreSQL esté ejecutándose
+sudo systemctl status postgresql
 
-# Recrear la base de datos
-rm -f database/newsletters.db
+# Verificar conexión
+psql -U postgres -d newsletters -c "SELECT NOW();"
+
+# Recrear la base de datos si es necesario
+sudo -u postgres dropdb newsletters
+sudo -u postgres createdb newsletters
 node init-database.js
+```
+
+### Error de Variables de Entorno
+```bash
+# Verificar que el archivo .env existe
+ls -la .env
+
+# Verificar configuración
+cat .env
+
+# Recrear archivo de configuración
+cp env.example .env
+nano .env
+```
+
+### Error de Permisos de Base de Datos
+```bash
+# Verificar permisos del usuario
+sudo -u postgres psql -c "\du"
+
+# Crear usuario si es necesario
+sudo -u postgres createuser --interactive
 ```
 
 ### Error de Autenticación

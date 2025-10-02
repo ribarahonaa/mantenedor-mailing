@@ -1,5 +1,5 @@
 const express = require('express');
-const { db } = require('../database/database');
+const { query } = require('../database/database');
 const { authenticateToken, requireAdmin } = require('./auth');
 
 const router = express.Router();
@@ -8,248 +8,196 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // Obtener todas las secciones maestras
-router.get('/', (req, res) => {
-    const query = `
-        SELECT ms.*, u.username as created_by_username
-        FROM master_sections ms 
-        LEFT JOIN users u ON ms.created_by = u.id 
-        WHERE ms.is_active = 1 
-        ORDER BY ms.created_at DESC
-    `;
-    
-    db.all(query, [], (err, sections) => {
-        if (err) {
-            return res.status(500).json({ error: 'Error obteniendo secciones maestras' });
-        }
+router.get('/', async (req, res) => {
+    try {
+        const result = await query(`
+            SELECT ms.*, u.username as created_by_username
+            FROM master_sections ms 
+            LEFT JOIN users u ON ms.created_by = u.id 
+            WHERE ms.is_active = true 
+            ORDER BY ms.created_at DESC
+        `);
         
         // Parsear el contenido JSON de cada sección
-        const parsedSections = sections.map(section => ({
+        const parsedSections = result.rows.map(section => ({
             ...section,
             content: JSON.parse(section.content)
         }));
         
         res.json({ sections: parsedSections });
-    });
+    } catch (error) {
+        console.error('Error obteniendo secciones maestras:', error);
+        res.status(500).json({ error: 'Error obteniendo secciones maestras' });
+    }
 });
 
 // Las operaciones siguientes requieren permisos de administrador
 router.use(requireAdmin);
 
 // Obtener una sección maestra por ID
-router.get('/:id', (req, res) => {
-    const { id } = req.params;
+router.get('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
 
-    db.get(`
-        SELECT ms.*, u.username as created_by_username 
-        FROM master_sections ms 
-        LEFT JOIN users u ON ms.created_by = u.id 
-        WHERE ms.id = ? AND ms.is_active = 1
-    `, [id], (err, section) => {
-        if (err) {
-            return res.status(500).json({ error: 'Error obteniendo sección maestra' });
-        }
-        
-        if (!section) {
+        const result = await query(`
+            SELECT ms.*, u.username as created_by_username 
+            FROM master_sections ms 
+            LEFT JOIN users u ON ms.created_by = u.id 
+            WHERE ms.id = $1 AND ms.is_active = true
+        `, [id]);
+
+        if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Sección maestra no encontrada' });
         }
-        
-        // Parsear el contenido JSON
+
+        const section = result.rows[0];
         section.content = JSON.parse(section.content);
-        
+
         res.json({ section });
-    });
+    } catch (error) {
+        console.error('Error obteniendo sección maestra:', error);
+        res.status(500).json({ error: 'Error obteniendo sección maestra' });
+    }
 });
 
 // Crear nueva sección maestra
-router.post('/', (req, res) => {
-    const { name, type, title, content } = req.body;
-    
-    if (!name || !type || !title || !content) {
-        return res.status(400).json({ error: 'Todos los campos son requeridos' });
-    }
-    
-    // Validar que el tipo sea válido
-    const validTypes = ['header', 'saludo', 'destacado', 'articulos', 'eventos', 'cta', 'dos-columnas-texto', 'dos-columnas-foto-derecha', 'dos-columnas-foto-izquierda', 'dos-columnas-fotos', 'footer'];
-    if (!validTypes.includes(type)) {
-        return res.status(400).json({ error: 'Tipo de sección no válido' });
-    }
-    
-    // Convertir el contenido a JSON si no lo está
-    const contentJson = typeof content === 'string' ? content : JSON.stringify(content);
-    
-    const query = `
-        INSERT INTO master_sections (name, type, title, content, created_by) 
-        VALUES (?, ?, ?, ?, ?)
-    `;
-    
-    db.run(query, [name, type, title, contentJson, req.user.id], function(err) {
-        if (err) {
-            return res.status(500).json({ error: 'Error creando sección maestra' });
+router.post('/', async (req, res) => {
+    try {
+        const { name, type, title, content } = req.body;
+
+        if (!name || !type || !title || !content) {
+            return res.status(400).json({ error: 'Todos los campos son requeridos' });
         }
-        
-        // Obtener la sección creada
-        db.get(`
-            SELECT ms.*, u.username as created_by_username 
-            FROM master_sections ms 
-            LEFT JOIN users u ON ms.created_by = u.id 
-            WHERE ms.id = ?
-        `, [this.lastID], (err, section) => {
-            if (err) {
-                return res.status(500).json({ error: 'Error obteniendo sección creada' });
-            }
-            
-            section.content = JSON.parse(section.content);
-            
-            res.status(201).json({
-                message: 'Sección maestra creada exitosamente',
-                section
-            });
+
+        // Validar que el tipo sea válido
+        const validTypes = ['header', 'saludo', 'destacado', 'articulos', 'eventos', 'cta', 'footer', 'dos-columnas-texto', 'dos-columnas-foto-derecha', 'dos-columnas-foto-izquierda', 'dos-columnas-fotos'];
+        if (!validTypes.includes(type)) {
+            return res.status(400).json({ error: 'Tipo de sección inválido' });
+        }
+
+        const result = await query(`
+            INSERT INTO master_sections (name, type, title, content, created_by) 
+            VALUES ($1, $2, $3, $4, $5) 
+            RETURNING *
+        `, [name, type, title, JSON.stringify(content), req.user.id]);
+
+        const section = result.rows[0];
+        section.content = JSON.parse(section.content);
+
+        res.status(201).json({ 
+            message: 'Sección maestra creada exitosamente',
+            section 
         });
-    });
+    } catch (error) {
+        console.error('Error creando sección maestra:', error);
+        res.status(500).json({ error: 'Error creando sección maestra' });
+    }
 });
 
 // Actualizar sección maestra
-router.put('/:id', (req, res) => {
-    const { id } = req.params;
-    const { name, type, title, content } = req.body;
-    
-    if (!name || !type || !title || !content) {
-        return res.status(400).json({ error: 'Todos los campos son requeridos' });
-    }
-    
-    // Validar que el tipo sea válido
-    const validTypes = ['header', 'saludo', 'destacado', 'articulos', 'eventos', 'cta', 'dos-columnas-texto', 'dos-columnas-foto-derecha', 'dos-columnas-foto-izquierda', 'dos-columnas-fotos', 'footer'];
-    if (!validTypes.includes(type)) {
-        return res.status(400).json({ error: 'Tipo de sección no válido' });
-    }
-    
-    // Convertir el contenido a JSON si no lo está
-    const contentJson = typeof content === 'string' ? content : JSON.stringify(content);
-    
-    const query = `
-        UPDATE master_sections 
-        SET name = ?, type = ?, title = ?, content = ?, updated_at = CURRENT_TIMESTAMP 
-        WHERE id = ? AND is_active = 1
-    `;
-    
-    db.run(query, [name, type, title, contentJson, id], function(err) {
-        if (err) {
-            return res.status(500).json({ error: 'Error actualizando sección maestra' });
+router.put('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, type, title, content } = req.body;
+
+        if (!name || !type || !title || !content) {
+            return res.status(400).json({ error: 'Todos los campos son requeridos' });
         }
-        
-        if (this.changes === 0) {
+
+        // Validar que el tipo sea válido
+        const validTypes = ['header', 'saludo', 'destacado', 'articulos', 'eventos', 'cta', 'footer', 'dos-columnas-texto', 'dos-columnas-foto-derecha', 'dos-columnas-foto-izquierda', 'dos-columnas-fotos'];
+        if (!validTypes.includes(type)) {
+            return res.status(400).json({ error: 'Tipo de sección inválido' });
+        }
+
+        const result = await query(`
+            UPDATE master_sections 
+            SET name = $1, type = $2, title = $3, content = $4, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $5 AND is_active = true
+            RETURNING *
+        `, [name, type, title, JSON.stringify(content), id]);
+
+        if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Sección maestra no encontrada' });
         }
-        
-        // Obtener la sección actualizada
-        db.get(`
-            SELECT ms.*, u.username as created_by_username 
-            FROM master_sections ms 
-            LEFT JOIN users u ON ms.created_by = u.id 
-            WHERE ms.id = ?
-        `, [id], (err, section) => {
-            if (err) {
-                return res.status(500).json({ error: 'Error obteniendo sección actualizada' });
-            }
-            
-            section.content = JSON.parse(section.content);
-            
-            res.json({
-                message: 'Sección maestra actualizada exitosamente',
-                section
-            });
+
+        const section = result.rows[0];
+        section.content = JSON.parse(section.content);
+
+        res.json({ 
+            message: 'Sección maestra actualizada exitosamente',
+            section 
         });
-    });
+    } catch (error) {
+        console.error('Error actualizando sección maestra:', error);
+        res.status(500).json({ error: 'Error actualizando sección maestra' });
+    }
 });
 
 // Eliminar sección maestra (soft delete)
-router.delete('/:id', (req, res) => {
-    const { id } = req.params;
-    
-    // Verificar si la sección está siendo usada en algún newsletter
-    db.get(`
-        SELECT COUNT(*) as count 
-        FROM newsletter_sections 
-        WHERE master_section_id = ?
-    `, [id], (err, result) => {
-        if (err) {
-            return res.status(500).json({ error: 'Error verificando uso de sección' });
-        }
-        
-        if (result.count > 0) {
-            return res.status(400).json({ 
-                error: 'No se puede eliminar esta sección porque está siendo utilizada en newsletters',
-                usageCount: result.count
-            });
-        }
-        
-        // Soft delete
-        db.run(`
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const result = await query(`
             UPDATE master_sections 
-            SET is_active = 0, updated_at = CURRENT_TIMESTAMP 
-            WHERE id = ?
-        `, [id], function(err) {
-            if (err) {
-                return res.status(500).json({ error: 'Error eliminando sección maestra' });
-            }
-            
-            if (this.changes === 0) {
-                return res.status(404).json({ error: 'Sección maestra no encontrada' });
-            }
-            
-            res.json({ message: 'Sección maestra eliminada exitosamente' });
-        });
-    });
+            SET is_active = false, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1 AND is_active = true
+            RETURNING id
+        `, [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Sección maestra no encontrada' });
+        }
+
+        res.json({ message: 'Sección maestra eliminada exitosamente' });
+    } catch (error) {
+        console.error('Error eliminando sección maestra:', error);
+        res.status(500).json({ error: 'Error eliminando sección maestra' });
+    }
 });
 
 // Duplicar sección maestra
-router.post('/:id/duplicate', (req, res) => {
-    const { id } = req.params;
-    
-    // Obtener la sección original
-    db.get('SELECT * FROM master_sections WHERE id = ? AND is_active = 1', [id], (err, section) => {
-        if (err) {
-            return res.status(500).json({ error: 'Error obteniendo sección original' });
-        }
-        
-        if (!section) {
+router.post('/:id/duplicate', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Obtener la sección original
+        const originalResult = await query(`
+            SELECT * FROM master_sections 
+            WHERE id = $1 AND is_active = true
+        `, [id]);
+
+        if (originalResult.rows.length === 0) {
             return res.status(404).json({ error: 'Sección maestra no encontrada' });
         }
-        
-        // Crear copia con nombre modificado
-        const newName = `${section.name} (Copia)`;
-        const newTitle = `${section.title} (Copia)`;
-        
-        const query = `
+
+        const originalSection = originalResult.rows[0];
+
+        // Crear la copia
+        const result = await query(`
             INSERT INTO master_sections (name, type, title, content, created_by) 
-            VALUES (?, ?, ?, ?, ?)
-        `;
-        
-        db.run(query, [newName, section.type, newTitle, section.content, req.user.id], function(err) {
-            if (err) {
-                return res.status(500).json({ error: 'Error duplicando sección maestra' });
-            }
-            
-            // Obtener la sección duplicada
-            db.get(`
-                SELECT ms.*, u.username as created_by_username 
-                FROM master_sections ms 
-                LEFT JOIN users u ON ms.created_by = u.id 
-                WHERE ms.id = ?
-            `, [this.lastID], (err, newSection) => {
-                if (err) {
-                    return res.status(500).json({ error: 'Error obteniendo sección duplicada' });
-                }
-                
-                newSection.content = JSON.parse(newSection.content);
-                
-                res.status(201).json({
-                    message: 'Sección maestra duplicada exitosamente',
-                    section: newSection
-                });
-            });
+            VALUES ($1, $2, $3, $4, $5) 
+            RETURNING *
+        `, [
+            `${originalSection.name} (Copia)`,
+            originalSection.type,
+            originalSection.title,
+            originalSection.content,
+            req.user.id
+        ]);
+
+        const section = result.rows[0];
+        section.content = JSON.parse(section.content);
+
+        res.status(201).json({ 
+            message: 'Sección maestra duplicada exitosamente',
+            section 
         });
-    });
+    } catch (error) {
+        console.error('Error duplicando sección maestra:', error);
+        res.status(500).json({ error: 'Error duplicando sección maestra' });
+    }
 });
 
-module.exports = router; 
+module.exports = router;

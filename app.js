@@ -241,6 +241,10 @@ class MailingApp {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         this.currentUser = null;
+        
+        // Quitar clase app-active del body
+        document.body.classList.remove('app-active');
+        
         this.showLoginScreen();
         this.showNotification('Sesión cerrada', 'info');
     }
@@ -280,9 +284,14 @@ class MailingApp {
         const mainApp = document.getElementById('mainApp');
         
         if (loginScreen && mainApp) {
-            loginScreen.classList.remove('hidden');
-            loginScreen.style.display = 'block';
+            // Quitar la clase app-active del body
+            document.body.classList.remove('app-active');
             
+            // Mostrar login
+            loginScreen.classList.remove('hidden');
+            loginScreen.style.display = 'flex';
+            
+            // Ocultar app principal
             mainApp.classList.add('hidden');
             mainApp.style.display = 'none';
         }
@@ -300,10 +309,14 @@ class MailingApp {
         });
         
         if (loginScreen && mainApp) {
-            // Usar clases CSS más específicas
+            // Agregar la clase app-active al body
+            document.body.classList.add('app-active');
+            
+            // Ocultar login
             loginScreen.classList.add('hidden');
             loginScreen.style.display = 'none';
             
+            // Mostrar app principal
             mainApp.classList.remove('hidden');
             mainApp.style.display = 'block';
             
@@ -483,13 +496,21 @@ class MailingApp {
             if (response.ok) {
                 const data = await response.json();
                 this.currentNewsletter = data.newsletter;
-                this.newsletterSections = data.sections;
+                
+                // Asegurar que newsletterSections es un array válido
+                this.newsletterSections = Array.isArray(data.newsletter.sections) 
+                    ? data.newsletter.sections 
+                    : (Array.isArray(data.sections) ? data.sections : []);
+                
+                console.log('📰 Newsletter cargado:', this.currentNewsletter);
+                console.log('📑 Secciones cargadas:', this.newsletterSections);
 
                 document.getElementById('editorTitle').textContent = `Editor: ${data.newsletter.name}`;
                 this.switchView('newsletterEditor');
                 this.renderNewsletterEditor();
             }
         } catch (error) {
+            console.error('Error abriendo newsletter:', error);
             this.showNotification('Error abriendo newsletter', 'error');
         }
     }
@@ -765,8 +786,14 @@ class MailingApp {
     }
     
     // Newsletter editor methods
-    renderNewsletterEditor() {
+    async renderNewsletterEditor() {
         console.log('🎨 Renderizando editor de newsletter...');
+        
+        // Asegurar que las secciones maestras estén cargadas
+        if (!this.masterSections || !Array.isArray(this.masterSections) || this.masterSections.length === 0) {
+            console.log('📥 Cargando secciones maestras...');
+            await this.loadMasterSections();
+        }
         
         // Renderizar secciones existentes
         this.renderNewsletterSections();
@@ -778,7 +805,13 @@ class MailingApp {
     renderNewsletterSections() {
         const container = document.getElementById('newsletterContainer');
         
+        if (!container) {
+            console.error('❌ No se encontró el contenedor del newsletter');
+            return;
+        }
+        
         if (!this.newsletterSections || this.newsletterSections.length === 0) {
+            console.log('📭 Newsletter sin secciones, mostrando estado vacío');
             container.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-plus-circle"></i>
@@ -788,10 +821,32 @@ class MailingApp {
             return;
         }
         
-        container.innerHTML = this.newsletterSections.map((section, index) => `
+        console.log('📄 Renderizando', this.newsletterSections.length, 'secciones del newsletter');
+        
+        container.innerHTML = this.newsletterSections.map((section, index) => {
+            // Validar que la sección tiene datos válidos
+            if (!section) {
+                console.warn('⚠️ Sección nula en índice', index);
+                return '';
+            }
+            
+            // Obtener el HTML de la sección de manera segura
+            let sectionHtml = '';
+            try {
+                sectionHtml = section.content && section.content.html 
+                    ? section.content.html 
+                    : '<p style="color: red;">⚠️ Sección sin contenido HTML</p>';
+            } catch (error) {
+                console.error('Error obteniendo HTML de sección:', error);
+                sectionHtml = '<p style="color: red;">⚠️ Error cargando contenido</p>';
+            }
+            
+            let sectionType = this.escapeHtml(section.section_type || section.type || 'Sin tipo');
+            
+            return `
             <div class="newsletter-section" data-section-id="${section.id}" data-index="${index}">
                 <div class="section-header">
-                    <span class="section-type">${section.section_type}</span>
+                    <span class="section-type">${sectionType}</span>
                     <div class="section-controls">
                         <button class="edit-section-btn" onclick="app.editNewsletterSection(${section.id})" title="Editar sección">
                             <i class="fas fa-edit"></i>
@@ -808,19 +863,24 @@ class MailingApp {
                     </div>
                 </div>
                 <div class="section-content">
-                    ${section.content.html}
+                    ${sectionHtml}
                 </div>
             </div>
-        `).join('');
+        `;
+        }).filter(html => html).join('');
+        
+        console.log('✅ Secciones del newsletter renderizadas correctamente');
     }
     
     renderAvailableSections() {
         const container = document.getElementById('availableSections');
         if (!container) {
+            console.warn('⚠️ No se encontró el contenedor de secciones disponibles');
             return;
         }
 
         if (!Array.isArray(this.masterSections) || this.masterSections.length === 0) {
+            console.log('📭 No hay secciones maestras para mostrar');
             container.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-puzzle-piece"></i>
@@ -830,12 +890,26 @@ class MailingApp {
             return;
         }
 
-        container.innerHTML = this.masterSections.map(section => `
+        console.log('📋 Renderizando', this.masterSections.length, 'secciones maestras disponibles');
+
+        container.innerHTML = this.masterSections.map(section => {
+            // Validar que la sección tiene los datos necesarios
+            if (!section || !section.id) {
+                console.warn('⚠️ Sección inválida encontrada:', section);
+                return '';
+            }
+            
+            // Escapar datos para HTML
+            let sectionName = this.escapeHtml(section.name || 'Sin nombre');
+            let sectionType = this.escapeHtml(section.type || 'desconocido');
+            let sectionTitle = this.escapeHtml(section.title || 'Sin título');
+            
+            return `
             <div class="available-section" data-section-id="${section.id}">
                 <div class="section-info">
-                    <h4>${section.name}</h4>
-                    <p class="section-type">${section.type}</p>
-                    <p class="section-title">${section.title}</p>
+                    <h4>${sectionName}</h4>
+                    <p class="section-type">${sectionType}</p>
+                    <p class="section-title">${sectionTitle}</p>
                 </div>
                 <div class="section-actions">
                     <button class="add-section-btn" onclick="app.addSectionToNewsletter(${section.id})" title="Agregar al newsletter">
@@ -843,33 +917,98 @@ class MailingApp {
                     </button>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).filter(html => html).join('');
+        
+        console.log('✅ Secciones disponibles renderizadas correctamente');
     }
     
     // Agregar sección al newsletter
     async addSectionToNewsletter(sectionId) {
         console.log('➕ Agregando sección al newsletter:', sectionId);
+        console.log('📋 Master sections disponibles:', this.masterSections);
+        console.log('📰 Newsletter actual:', this.currentNewsletter);
+        console.log('📑 Secciones actuales del newsletter:', this.newsletterSections);
         
         try {
-            // Buscar la sección maestra
-            const masterSection = this.masterSections.find(s => s.id === sectionId);
+            // Validar que hay un newsletter activo
+            if (!this.currentNewsletter) {
+                this.showNotification('No hay newsletter activo. Por favor, abre un newsletter primero.', 'error');
+                console.error('❌ No hay newsletter activo');
+                return;
+            }
+            
+            // Validar que masterSections está cargado
+            if (!this.masterSections || !Array.isArray(this.masterSections) || this.masterSections.length === 0) {
+                this.showNotification('No hay secciones maestras disponibles. Recargando...', 'warning');
+                console.warn('⚠️ Master sections no está cargado, intentando recargar...');
+                await this.loadMasterSections();
+                
+                // Verificar nuevamente después de recargar
+                if (!this.masterSections || this.masterSections.length === 0) {
+                    this.showNotification('No se pudieron cargar las secciones maestras', 'error');
+                    console.error('❌ No se pudieron cargar master sections');
+                    return;
+                }
+            }
+            
+            // Convertir sectionId a número para asegurar la comparación correcta
+            let numericSectionId = typeof sectionId === 'string' ? parseInt(sectionId, 10) : sectionId;
+            console.log('🔍 Buscando sección con ID:', numericSectionId, '(tipo:', typeof numericSectionId, ')');
+            
+            // Buscar la sección maestra con comparación flexible
+            let masterSection = this.masterSections.find(s => {
+                let sId = typeof s.id === 'string' ? parseInt(s.id, 10) : s.id;
+                return sId === numericSectionId;
+            });
+            
             if (!masterSection) {
+                console.error('❌ Sección maestra no encontrada. IDs disponibles:', this.masterSections.map(s => s.id));
                 this.showNotification('Sección maestra no encontrada', 'error');
                 return;
             }
             
+            console.log('✅ Sección maestra encontrada:', masterSection);
+            
+            // Validar que la sección tiene contenido
+            if (!masterSection.content || typeof masterSection.content !== 'object') {
+                console.error('❌ La sección maestra no tiene contenido válido:', masterSection);
+                this.showNotification('La sección maestra no tiene contenido válido', 'error');
+                return;
+            }
+            
+            // Validar que hay HTML en el contenido
+            if (!masterSection.content.html) {
+                console.error('❌ La sección maestra no tiene HTML:', masterSection);
+                this.showNotification('La sección maestra no tiene HTML definido', 'error');
+                return;
+            }
+            
             // Crear una copia de la sección para el newsletter
-            const newsletterSection = {
+            let newsletterSection = {
                 id: Date.now() + Math.random(), // ID temporal
-                master_section_id: sectionId,
+                master_section_id: numericSectionId,
                 section_type: masterSection.type,
-                title: masterSection.title,
-                content: { ...masterSection.content },
-                order: this.newsletterSections.length
+                title: masterSection.title || 'Sin título',
+                content: { 
+                    title: masterSection.title || 'Sin título',
+                    html: masterSection.content.html 
+                },
+                section_order: this.newsletterSections ? this.newsletterSections.length : 0,
+                is_customized: false
             };
+            
+            console.log('📦 Nueva sección creada:', newsletterSection);
+            
+            // Inicializar el array si no existe
+            if (!this.newsletterSections) {
+                this.newsletterSections = [];
+            }
             
             // Agregar al array local
             this.newsletterSections.push(newsletterSection);
+            
+            console.log('✅ Sección agregada al array local');
             
             // Actualizar la vista
             this.renderNewsletterEditor();
@@ -877,8 +1016,9 @@ class MailingApp {
             this.showNotification('Sección agregada al newsletter', 'success');
             
         } catch (error) {
-            console.error('Error agregando sección:', error);
-            this.showNotification('Error agregando sección al newsletter', 'error');
+            console.error('💥 Error agregando sección:', error);
+            console.error('Stack trace:', error.stack);
+            this.showNotification('Error agregando sección al newsletter: ' + error.message, 'error');
         }
     }
     
@@ -1187,14 +1327,16 @@ class MailingApp {
                 id: this.currentNewsletter.id,
                 sections: this.newsletterSections.map((section, index) => ({
                     master_section_id: section.master_section_id,
-                    type: section.section_type,
-                    title: section.title,
-                    content: section.content,
-                    order: index
+                    type: section.section_type || section.type || 'default',
+                    title: section.title || 'Sin título',
+                    content: section.content || { html: '', title: section.title || 'Sin título' },
+                    order: index,
+                    is_customized: section.is_customized || false
                 }))
             };
             
             console.log('📤 Enviando datos del newsletter:', newsletterData);
+            console.log('📊 Cantidad de secciones a guardar:', newsletterData.sections.length);
             
             // Llamar a la API para guardar
             const response = await this.apiRequest(`/newsletters/${this.currentNewsletter.id}/sections`, {
@@ -1206,12 +1348,16 @@ class MailingApp {
                 const data = await response.json();
                 this.showNotification('Newsletter guardado exitosamente', 'success');
                 
-                // Actualizar el newsletter local con la respuesta del servidor
-                if (data.newsletter) {
-                    this.currentNewsletter = data.newsletter;
+                // Actualizar las secciones locales con las secciones guardadas desde el servidor
+                if (data.sections && Array.isArray(data.sections)) {
+                    this.newsletterSections = data.sections;
+                    console.log('✅ Secciones actualizadas desde el servidor:', this.newsletterSections);
+                    
+                    // Re-renderizar el editor para mostrar las secciones actualizadas con sus IDs reales
+                    this.renderNewsletterEditor();
                 }
                 
-                console.log('✅ Newsletter guardado correctamente');
+                console.log('✅ Newsletter guardado correctamente - ' + (data.count || 0) + ' secciones guardadas');
             } else {
                 const errorData = await response.json();
                 this.showNotification(errorData.error || 'Error guardando el newsletter', 'error');

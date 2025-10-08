@@ -168,8 +168,6 @@ class MailingApp {
         const username = document.getElementById('loginUsername').value;
         const password = document.getElementById('loginPassword').value;
         
-        console.log('🔐 Intentando login con:', username);
-        
         try {
             const response = await fetch(`${this.apiBaseUrl}/auth/login`, {
                 method: 'POST',
@@ -180,28 +178,19 @@ class MailingApp {
             });
             
             const data = await response.json();
-            console.log('📡 Respuesta del servidor:', data);
             
             if (response.ok) {
-                console.log('✅ Login exitoso, guardando datos...');
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 this.currentUser = data.user;
                 
-                console.log('👤 Usuario actual:', this.currentUser);
-                console.log('🔄 Mostrando aplicación principal...');
-                
                 this.showMainApp();
                 this.loadInitialData();
                 this.showNotification('Login exitoso', 'success');
-                
-                console.log('🎉 Aplicación principal mostrada');
             } else {
-                console.log('❌ Error en login:', data.error);
                 this.showNotification(data.error, 'error');
             }
         } catch (error) {
-            console.error('💥 Error de conexión:', error);
             this.showNotification('Error de conexión', 'error');
         }
     }
@@ -298,15 +287,8 @@ class MailingApp {
     }
     
     showMainApp() {
-        console.log('🔄 Ejecutando showMainApp...');
-        
         const loginScreen = document.getElementById('loginScreen');
         const mainApp = document.getElementById('mainApp');
-        
-        console.log('📱 Elementos encontrados:', {
-            loginScreen: !!loginScreen,
-            mainApp: !!mainApp
-        });
         
         if (loginScreen && mainApp) {
             // Agregar la clase app-active al body
@@ -320,8 +302,6 @@ class MailingApp {
             mainApp.classList.remove('hidden');
             mainApp.style.display = 'block';
             
-            console.log('✅ Pantallas cambiadas correctamente');
-            
             // Update user info
             const usernameElement = document.getElementById('currentUsername');
             const roleElement = document.getElementById('userRole');
@@ -329,28 +309,23 @@ class MailingApp {
             if (usernameElement && roleElement) {
                 usernameElement.textContent = this.currentUser.username;
                 roleElement.textContent = this.currentUser.role;
-                console.log('👤 Información de usuario actualizada');
             } else {
                 console.warn('⚠️ No se encontraron elementos de usuario');
             }
             
             // Show/hide admin elements
             const adminElements = document.querySelectorAll('.admin-only');
-            console.log('🔑 Elementos admin encontrados:', adminElements.length);
             
             adminElements.forEach(el => {
                 el.style.display = this.currentUser.role === 'admin' ? 'block' : 'none';
             });
             
-            console.log('🎯 Aplicación principal mostrada exitosamente');
         } else {
             console.error('❌ No se pudieron encontrar los elementos de la interfaz');
         }
     }
     
     switchView(view) {
-        console.log('🔄 Cambiando a vista:', view);
-        
         // Hide all views
         document.querySelectorAll('.content-view').forEach(v => {
             v.classList.remove('active');
@@ -360,7 +335,6 @@ class MailingApp {
         const targetView = document.getElementById(`${view}View`);
         if (targetView) {
             targetView.classList.add('active');
-            console.log('✅ Vista mostrada:', view);
         } else {
             console.error('❌ No se encontró la vista:', `${view}View`);
             return;
@@ -374,7 +348,6 @@ class MailingApp {
         const activeNavBtn = document.querySelector(`[data-view="${view}"]`);
         if (activeNavBtn) {
             activeNavBtn.classList.add('active');
-            console.log('✅ Navegación actualizada');
         } else {
             console.warn('⚠️ No se encontró el botón de navegación para:', view);
         }
@@ -386,20 +359,16 @@ class MailingApp {
             this.loadMasterSections();
         } else if (view === 'createNewsletter') {
             // No need to load data for create newsletter view
-            console.log('📝 Vista de crear newsletter activada');
         }
     }
     
     // Data loading methods
     async loadInitialData() {
-        console.log('📊 Cargando datos iniciales...');
-        
         try {
             await Promise.all([
                 this.loadNewsletters(),
                 this.loadMasterSections()
             ]);
-            console.log('✅ Datos iniciales cargados exitosamente');
         } catch (error) {
             console.error('❌ Error cargando datos iniciales:', error);
         }
@@ -502,8 +471,6 @@ class MailingApp {
                     ? data.newsletter.sections 
                     : (Array.isArray(data.sections) ? data.sections : []);
                 
-                console.log('📰 Newsletter cargado:', this.currentNewsletter);
-                console.log('📑 Secciones cargadas:', this.newsletterSections);
 
                 document.getElementById('editorTitle').textContent = `Editor: ${data.newsletter.name}`;
                 this.switchView('newsletterEditor');
@@ -787,11 +754,9 @@ class MailingApp {
     
     // Newsletter editor methods
     async renderNewsletterEditor() {
-        console.log('🎨 Renderizando editor de newsletter...');
-        
+
         // Asegurar que las secciones maestras estén cargadas
         if (!this.masterSections || !Array.isArray(this.masterSections) || this.masterSections.length === 0) {
-            console.log('📥 Cargando secciones maestras...');
             await this.loadMasterSections();
         }
         
@@ -811,7 +776,6 @@ class MailingApp {
         }
         
         if (!this.newsletterSections || this.newsletterSections.length === 0) {
-            console.log('📭 Newsletter sin secciones, mostrando estado vacío');
             container.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-plus-circle"></i>
@@ -820,8 +784,6 @@ class MailingApp {
             `;
             return;
         }
-        
-        console.log('📄 Renderizando', this.newsletterSections.length, 'secciones del newsletter');
         
         container.innerHTML = this.newsletterSections.map((section, index) => {
             // Validar que la sección tiene datos válidos
@@ -869,7 +831,6 @@ class MailingApp {
         `;
         }).filter(html => html).join('');
         
-        console.log('✅ Secciones del newsletter renderizadas correctamente');
     }
     
     renderAvailableSections() {
@@ -880,7 +841,6 @@ class MailingApp {
         }
 
         if (!Array.isArray(this.masterSections) || this.masterSections.length === 0) {
-            console.log('📭 No hay secciones maestras para mostrar');
             container.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-puzzle-piece"></i>
@@ -889,8 +849,6 @@ class MailingApp {
             `;
             return;
         }
-
-        console.log('📋 Renderizando', this.masterSections.length, 'secciones maestras disponibles');
 
         container.innerHTML = this.masterSections.map(section => {
             // Validar que la sección tiene los datos necesarios
@@ -919,17 +877,12 @@ class MailingApp {
             </div>
         `;
         }).filter(html => html).join('');
-        
-        console.log('✅ Secciones disponibles renderizadas correctamente');
+
     }
     
     // Agregar sección al newsletter
     async addSectionToNewsletter(sectionId) {
-        console.log('➕ Agregando sección al newsletter:', sectionId);
-        console.log('📋 Master sections disponibles:', this.masterSections);
-        console.log('📰 Newsletter actual:', this.currentNewsletter);
-        console.log('📑 Secciones actuales del newsletter:', this.newsletterSections);
-        
+
         try {
             // Validar que hay un newsletter activo
             if (!this.currentNewsletter) {
@@ -954,7 +907,6 @@ class MailingApp {
             
             // Convertir sectionId a número para asegurar la comparación correcta
             let numericSectionId = typeof sectionId === 'string' ? parseInt(sectionId, 10) : sectionId;
-            console.log('🔍 Buscando sección con ID:', numericSectionId, '(tipo:', typeof numericSectionId, ')');
             
             // Buscar la sección maestra con comparación flexible
             let masterSection = this.masterSections.find(s => {
@@ -967,8 +919,6 @@ class MailingApp {
                 this.showNotification('Sección maestra no encontrada', 'error');
                 return;
             }
-            
-            console.log('✅ Sección maestra encontrada:', masterSection);
             
             // Validar que la sección tiene contenido
             if (!masterSection.content || typeof masterSection.content !== 'object') {
@@ -998,8 +948,6 @@ class MailingApp {
                 is_customized: false
             };
             
-            console.log('📦 Nueva sección creada:', newsletterSection);
-            
             // Inicializar el array si no existe
             if (!this.newsletterSections) {
                 this.newsletterSections = [];
@@ -1007,8 +955,6 @@ class MailingApp {
             
             // Agregar al array local
             this.newsletterSections.push(newsletterSection);
-            
-            console.log('✅ Sección agregada al array local');
             
             // Actualizar la vista
             this.renderNewsletterEditor();
@@ -1024,7 +970,6 @@ class MailingApp {
     
     // Editar sección del newsletter
     async editNewsletterSection(sectionId) {
-        console.log('✏️ Editando sección del newsletter:', sectionId);
         
         const section = this.newsletterSections.find(s => s.id === sectionId);
         if (!section) {
@@ -1303,7 +1248,6 @@ class MailingApp {
     
     // Guardar newsletter
     async saveNewsletter() {
-        console.log('💾 Guardando newsletter...');
         
         if (!this.currentNewsletter) {
             this.showNotification('No hay newsletter activo para guardar', 'error');
@@ -1335,9 +1279,6 @@ class MailingApp {
                 }))
             };
             
-            console.log('📤 Enviando datos del newsletter:', newsletterData);
-            console.log('📊 Cantidad de secciones a guardar:', newsletterData.sections.length);
-            
             // Llamar a la API para guardar
             const response = await this.apiRequest(`/newsletters/${this.currentNewsletter.id}/sections`, {
                 method: 'PUT',
@@ -1351,13 +1292,10 @@ class MailingApp {
                 // Actualizar las secciones locales con las secciones guardadas desde el servidor
                 if (data.sections && Array.isArray(data.sections)) {
                     this.newsletterSections = data.sections;
-                    console.log('✅ Secciones actualizadas desde el servidor:', this.newsletterSections);
                     
                     // Re-renderizar el editor para mostrar las secciones actualizadas con sus IDs reales
                     this.renderNewsletterEditor();
                 }
-                
-                console.log('✅ Newsletter guardado correctamente - ' + (data.count || 0) + ' secciones guardadas');
             } else {
                 const errorData = await response.json();
                 this.showNotification(errorData.error || 'Error guardando el newsletter', 'error');
@@ -1440,7 +1378,6 @@ class MailingApp {
     
     // Editar sección maestra
     async editMasterSection(sectionId) {
-        console.log('✏️ Editando sección maestra:', sectionId);
         
         try {
             const response = await this.apiRequest(`/master-sections/${sectionId}`);
@@ -1516,7 +1453,6 @@ class MailingApp {
     
     // Duplicar sección maestra
     async duplicateMasterSection(sectionId) {
-        console.log('📋 Duplicando sección maestra:', sectionId);
         
         try {
             const response = await this.apiRequest(`/master-sections/${sectionId}/duplicate`, {
@@ -1683,7 +1619,6 @@ class MailingApp {
     
     // Eliminar sección maestra
     async deleteMasterSection(sectionId) {
-        console.log('🗑️ Eliminando sección maestra:', sectionId);
         
         if (!confirm('¿Estás seguro de que quieres eliminar esta sección maestra? Esta acción no se puede deshacer.')) {
             return;
@@ -1781,111 +1716,17 @@ class MailingApp {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new MailingApp();
     
-    // Agregar función de debugging al objeto global
-    window.debugApp = () => {
-        console.log('🔍 Estado de la aplicación:', {
-            currentUser: window.app.currentUser,
-            token: localStorage.getItem('token'),
-            user: localStorage.getItem('user'),
-            loginScreen: document.getElementById('loginScreen'),
-            mainApp: document.getElementById('mainApp'),
-            currentUsername: document.getElementById('currentUsername'),
-            userRole: document.getElementById('userRole')
-        });
-    };
-    
     // Función para forzar la visualización de la aplicación principal
     window.forceShowMainApp = () => {
-        console.log('🚀 Forzando visualización de la aplicación principal...');
         const loginScreen = document.getElementById('loginScreen');
         const mainApp = document.getElementById('mainApp');
         
         if (loginScreen && mainApp) {
             loginScreen.style.display = 'none';
             mainApp.style.display = 'block';
-            console.log('✅ Aplicación principal forzada a mostrarse');
         } else {
             console.error('❌ No se pudieron encontrar los elementos');
         }
     };
     
-    // Función para probar el DOM
-    window.testDOM = () => {
-        console.log('🧪 Probando elementos del DOM...');
-        
-        const elements = {
-            loginScreen: document.getElementById('loginScreen'),
-            mainApp: document.getElementById('mainApp'),
-            currentUsername: document.getElementById('currentUsername'),
-            userRole: document.getElementById('userRole'),
-            loginForm: document.getElementById('loginForm'),
-            registerForm: document.getElementById('registerForm')
-        };
-        
-        console.log('📋 Elementos encontrados:', elements);
-        
-        // Verificar clases CSS
-        if (elements.loginScreen) {
-            console.log('🔍 Clases de loginScreen:', elements.loginScreen.className);
-            console.log('🔍 Estilo display de loginScreen:', elements.loginScreen.style.display);
-            console.log('🔍 Computed style de loginScreen:', window.getComputedStyle(elements.loginScreen).display);
-        }
-        
-        if (elements.mainApp) {
-            console.log('🔍 Clases de mainApp:', elements.mainApp.className);
-            console.log('🔍 Estilo display de mainApp:', elements.mainApp.style.display);
-            console.log('🔍 Computed style de mainApp:', window.getComputedStyle(elements.mainApp).display);
-        }
-    };
-    
-    // Función para verificar todas las vistas
-    window.testViews = () => {
-        console.log('🧪 Probando todas las vistas...');
-        
-        const views = [
-            'newsletters',
-            'masterSections', 
-            'createNewsletter',
-            'newsletterEditor'
-        ];
-        
-        views.forEach(view => {
-            const viewElement = document.getElementById(`${view}View`);
-            const navButton = document.querySelector(`[data-view="${view}"]`);
-            
-            console.log(`📱 Vista ${view}:`, {
-                element: !!viewElement,
-                navButton: !!navButton,
-                elementId: viewElement ? viewElement.id : 'NO ENCONTRADO',
-                navButtonDataView: navButton ? navButton.dataset.view : 'NO ENCONTRADO'
-            });
-        });
-    };
-    
-    // Función para probar cambio de vistas
-    window.testSwitchView = (view) => {
-        console.log(`🧪 Probando cambio a vista: ${view}`);
-        if (window.app && window.app.switchView) {
-            window.app.switchView(view);
-        } else {
-            console.error('❌ La aplicación no está disponible');
-        }
-    };
-    
-    // Agregar función de debugging al objeto global
-    window.debugSections = () => {
-        console.log('Estado actual de las secciones:', window.app.sections);
-        if (window.app.sections) {
-            window.app.sections.forEach((section, index) => {
-                console.log(`Sección ${index}:`, {
-                    id: section.id,
-                    type: window.app.getSectionTypeFromId ? window.app.getSectionTypeFromId(section.id) : 'N/A',
-                    title: section.content ? section.content.title : 'N/A',
-                    htmlPreview: section.content && section.content.html ? section.content.html.substring(0, 100) + '...' : 'N/A'
-                });
-            });
-        } else {
-            console.log('No hay secciones cargadas');
-        }
-    };
 }); 

@@ -10,55 +10,116 @@
 <body>
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
-        <div class="login-container">
-            <div class="login-header">
-                <h1>Mantenedor de Mailings</h1>
-                <p>Gestiona tus newsletters y secciones de manera profesional</p>
+        <aside class="login-hero">
+            <div class="login-hero-content">
+                <div class="login-brand">
+                    <span class="login-brand-mark"><i class="fas fa-envelope-open-text"></i></span>
+                    <span class="login-brand-name">Innk Mailing</span>
+                </div>
+                <h1 class="login-hero-title">Newsletters que enganchan, sin fricción.</h1>
+                <p class="login-hero-subtitle">Diseña, edita y gestiona tus mailings con un editor visual pensado para equipos.</p>
+                <ul class="login-hero-features">
+                    <li><i class="fas fa-check-circle"></i> Secciones maestras reutilizables</li>
+                    <li><i class="fas fa-check-circle"></i> Editor tipo papel con drag &amp; drop</li>
+                    <li><i class="fas fa-check-circle"></i> Vista previa escritorio / móvil</li>
+                </ul>
             </div>
-            
-            <div class="login-tabs">
-                <button class="tab-btn active" data-tab="login">Iniciar Sesión</button>
-                <button class="tab-btn" data-tab="register">Registrarse</button>
+        </aside>
+
+        <section class="login-panel">
+            <div class="login-container">
+                <div class="login-header">
+                    <h1 id="loginHeaderTitle">Bienvenido</h1>
+                    <p id="loginHeaderSubtitle">Inicia sesión para gestionar tus newsletters</p>
+                </div>
+
+                <div class="login-tabs" id="loginTabs">
+                    <button class="tab-btn active" data-tab="login">Iniciar sesión</button>
+                    <button class="tab-btn" data-tab="register">Registrarse</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" class="login-form active">
+                    <div class="form-group">
+                        <label for="loginUsername">Usuario</label>
+                        <input type="text" id="loginUsername" autocomplete="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Contraseña</label>
+                        <input type="password" id="loginPassword" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" class="login-btn">
+                        <i class="fas fa-sign-in-alt"></i> Iniciar sesión
+                    </button>
+                    <p class="login-form-link">
+                        <a href="#" id="forgotPasswordLink">¿Olvidaste tu contraseña?</a>
+                    </p>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm" class="login-form">
+                    <div class="form-group">
+                        <label for="registerUsername">Usuario</label>
+                        <input type="text" id="registerUsername" autocomplete="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" autocomplete="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Contraseña</label>
+                        <input type="password" id="registerPassword" autocomplete="new-password" required minlength="6">
+                    </div>
+                    <button type="submit" class="login-btn">
+                        <i class="fas fa-user-plus"></i> Crear cuenta
+                    </button>
+                </form>
+
+                <!-- Forgot Password Form -->
+                <form id="forgotForm" class="login-form">
+                    <div class="form-group">
+                        <label for="forgotEmail">Email</label>
+                        <input type="email" id="forgotEmail" autocomplete="email" required>
+                    </div>
+                    <button type="submit" class="login-btn">
+                        <i class="fas fa-paper-plane"></i> Enviar link de reset
+                    </button>
+                    <p class="login-form-link">
+                        <a href="#" id="backToLoginFromForgot">← Volver al inicio de sesión</a>
+                    </p>
+                </form>
+
+                <!-- Forgot Result (muestra el link generado) -->
+                <div id="forgotResult" class="login-form login-result">
+                    <div class="login-result-icon"><i class="fas fa-link"></i></div>
+                    <h3>Link de reset generado</h3>
+                    <p class="login-result-msg">En producción este link se enviaría por email. Cópialo y ábrelo para establecer tu nueva contraseña:</p>
+                    <div class="login-result-url">
+                        <input type="text" id="forgotResultUrl" readonly>
+                        <button type="button" id="copyForgotUrlBtn" class="copy-url-btn" title="Copiar"><i class="fas fa-copy"></i></button>
+                    </div>
+                    <p class="login-result-note">Válido por 1 hora · uso único</p>
+                    <button type="button" class="login-btn login-btn-secondary" id="backToLoginFromResult">
+                        ← Volver al inicio de sesión
+                    </button>
+                </div>
+
+                <!-- Reset Password Form (solo con ?token=XXX en URL) -->
+                <form id="resetForm" class="login-form">
+                    <div class="form-group">
+                        <label for="resetPassword">Nueva contraseña</label>
+                        <input type="password" id="resetPassword" autocomplete="new-password" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="resetPasswordConfirm">Confirmar contraseña</label>
+                        <input type="password" id="resetPasswordConfirm" autocomplete="new-password" required minlength="6">
+                    </div>
+                    <button type="submit" class="login-btn">
+                        <i class="fas fa-key"></i> Establecer nueva contraseña
+                    </button>
+                </form>
             </div>
-            
-            <!-- Login Form -->
-            <form id="loginForm" class="login-form active">
-                <div class="form-group">
-                    <label for="loginUsername">Usuario</label>
-                    <input type="text" id="loginUsername" required>
-                </div>
-                <div class="form-group">
-                    <label for="loginPassword">Contraseña</label>
-                    <input type="password" id="loginPassword" required>
-                </div>
-                <button type="submit" class="login-btn">
-                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
-                </button>
-            </form>
-            
-            <!-- Register Form -->
-            <form id="registerForm" class="login-form">
-                <div class="form-group">
-                    <label for="registerUsername">Usuario</label>
-                    <input type="text" id="registerUsername" required>
-                </div>
-                <div class="form-group">
-                    <label for="registerEmail">Email</label>
-                    <input type="email" id="registerEmail" required>
-                </div>
-                <div class="form-group">
-                    <label for="registerPassword">Contraseña</label>
-                    <input type="password" id="registerPassword" required minlength="6">
-                </div>
-                <button type="submit" class="login-btn">
-                    <i class="fas fa-user-plus"></i> Registrarse
-                </button>
-            </form>
-            
-            <div class="login-footer">
-                <p></p>
-            </div>
-        </div>
+        </section>
     </div>
 
     <!-- Main Application -->
@@ -168,21 +229,43 @@
                 </div>
                 
                 <div class="newsletter-editor">
-                    <div class="editor-sidebar">
-                        <h3>Secciones Disponibles</h3>
+                    <aside class="editor-sidebar">
+                        <h3>Bloques</h3>
                         <div id="availableSections" class="available-sections">
                             <!-- Secciones disponibles se cargarán aquí -->
                         </div>
-                    </div>
-                    
-                    <div class="editor-main">
+                    </aside>
+
+                    <div class="editor-canvas" data-viewport="desktop">
+                        <div class="canvas-toolbar">
+                            <div class="viewport-toggle" role="tablist" aria-label="Tamaño de vista previa">
+                                <button type="button" class="viewport-btn active" data-viewport="desktop" onclick="app.setCanvasViewport('desktop')" title="Vista escritorio">
+                                    <i class="fas fa-desktop"></i>
+                                    <span>Escritorio</span>
+                                </button>
+                                <button type="button" class="viewport-btn" data-viewport="mobile" onclick="app.setCanvasViewport('mobile')" title="Vista móvil">
+                                    <i class="fas fa-mobile-alt"></i>
+                                    <span>Móvil</span>
+                                </button>
+                            </div>
+                        </div>
                         <div id="newsletterContainer" class="newsletter-container">
                             <div class="empty-state">
                                 <i class="fas fa-plus-circle"></i>
-                                <p>Arrastra secciones aquí para construir tu newsletter</p>
+                                <p>Arrastra bloques aquí para construir tu newsletter</p>
                             </div>
                         </div>
                     </div>
+
+                    <aside class="editor-properties">
+                        <h3>Propiedades</h3>
+                        <div id="propertiesPanel" class="properties-panel">
+                            <div class="empty-state">
+                                <i class="fas fa-sliders-h"></i>
+                                <p>Selecciona un bloque para editar sus propiedades</p>
+                            </div>
+                        </div>
+                    </aside>
                 </div>
             </div>
         </main>

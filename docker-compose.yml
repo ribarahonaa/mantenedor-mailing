@@ -1,0 +1,27 @@
+services:
+  app:
+    build: .
+    container_name: mantenedor-mailing
+    ports:
+      - "${PORT:-3001}:3001"
+    volumes:
+      - ./database:/app/database
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    restart: unless-stopped
+
+  app-dev:
+    profiles: ["dev"]
+    build: .
+    container_name: mantenedor-mailing-dev
+    ports:
+      - "${PORT:-3001}:3001"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+    command: node --watch server.js
+    restart: unless-stopped

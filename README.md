@@ -85,32 +85,37 @@ templates                # Plantillas del sistema
 
 ## 🚀 Instalación y Configuración
 
-### Prerrequisitos
-- Node.js 14+ 
+### Opción A: Local con Node.js
+
+#### Prerrequisitos
+- Node.js 14+
 - npm o yarn
 
-### 1. Clonar el repositorio
 ```bash
 git clone <repository-url>
 cd mantenedor-mailing
-```
-
-### 2. Instalar dependencias
-```bash
 npm install
+npm run init-db     # inicializa database/newsletters.db
+npm start           # levanta servidor en http://localhost:3001
 ```
 
-### 3. Inicializar la base de datos
+### Opción B: Docker + Make (recomendado)
+
+#### Prerrequisitos
+- Docker y Docker Compose
+- `make`
+
 ```bash
-node init-database.js
+make build            # construye la imagen
+make up               # levanta el contenedor (puerto 3001)
+make init-db-docker   # inicializa la DB dentro del contenedor (solo la primera vez)
+make logs             # ver logs en vivo
+make down             # detener y eliminar el contenedor
 ```
 
-### 4. Iniciar el servidor
-```bash
-node server.js
-```
+La base de datos vive en `./database/newsletters.db` y se monta como volumen, por lo que persiste entre rebuilds. Ejecuta `make help` para ver todos los targets disponibles (`shell`, `restart`, `reset-db`, `clean`, etc.).
 
-### 5. Acceder a la aplicación
+### Acceso
 - **URL**: http://localhost:3001
 - **Usuario Admin**: `admin` / `admin123`
 

@@ -1,5 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { db } = require('../database/database');
 
@@ -187,6 +188,143 @@ router.put('/change-password', authenticateToken, async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
+});
+
+// ==========================================================
+// Reset de contraseña (sin email — devuelve el link en la respuesta)
+// ==========================================================
+
+// Solicitar reset: genera token, lo guarda en DB y devuelve el link
+router.post('/forgot-password', (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ error: 'Email es requerido' });
+    }
+
+    db.get('SELECT id, username FROM users WHERE email = ? AND is_active = 1', [email], (err, user) => {
+        if (err) {
+            return res.status(500).json({ error: 'Error en la base de datos' });
+        }
+
+        // Respuesta genérica para no filtrar si el email existe.
+        // Si el usuario existe, incluimos `resetUrl` con el link real.
+        const genericMessage = 'Si el email está registrado, recibirás instrucciones para restablecer la contraseña.';
+
+        if (!user) {
+            return res.json({ message: genericMessage });
+        }
+
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // +1 hora
+
+        db.run(
+            'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
+            [user.id, token, expiresAt],
+            (insertErr) => {
+                if (insertErr) {
+                    return res.status(500).json({ error: 'Error generando token de reset' });
+                }
+
+                const resetUrl = `/reset-password?token=${token}`;
+                res.json({
+                    message: genericMessage,
+                    resetUrl,
+                    expiresAt,
+                    username: user.username
+                });
+            }
+        );
+    });
+});
+
+// Validar token (para el frontend antes de mostrar el formulario)
+router.get('/validate-reset-token/:token', (req, res) => {
+    const { token } = req.params;
+
+    db.get(
+        `SELECT prt.id, prt.user_id, prt.expires_at, prt.used, u.username
+         FROM password_reset_tokens prt
+         JOIN users u ON u.id = prt.user_id
+         WHERE prt.token = ?`,
+        [token],
+        (err, row) => {
+            if (err) {
+                return res.status(500).json({ error: 'Error en la base de datos' });
+            }
+            if (!row) {
+                return res.status(404).json({ valid: false, reason: 'Token no encontrado' });
+            }
+            if (row.used) {
+                return res.status(400).json({ valid: false, reason: 'Token ya utilizado' });
+            }
+            if (new Date(row.expires_at) < new Date()) {
+                return res.status(400).json({ valid: false, reason: 'Token expirado' });
+            }
+            res.json({ valid: true, username: row.username });
+        }
+    );
+});
+
+// Consumir token y establecer nueva contraseña
+router.post('/reset-password', async (req, res) => {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+        return res.status(400).json({ error: 'Token y nueva contraseña son requeridos' });
+    }
+    if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+
+    db.get(
+        'SELECT id, user_id, expires_at, used FROM password_reset_tokens WHERE token = ?',
+        [token],
+        async (err, row) => {
+            if (err) {
+                return res.status(500).json({ error: 'Error en la base de datos' });
+            }
+            if (!row) {
+                return res.status(404).json({ error: 'Token no válido' });
+            }
+            if (row.used) {
+                return res.status(400).json({ error: 'Token ya utilizado' });
+            }
+            if (new Date(row.expires_at) < new Date()) {
+                return res.status(400).json({ error: 'Token expirado. Solicita uno nuevo.' });
+            }
+
+            try {
+                const passwordHash = await bcrypt.hash(newPassword, 10);
+
+                db.serialize(() => {
+                    db.run(
+                        'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                        [passwordHash, row.user_id],
+                        function (updateErr) {
+                            if (updateErr) {
+                                return res.status(500).json({ error: 'Error actualizando contraseña' });
+                            }
+
+                            db.run(
+                                'UPDATE password_reset_tokens SET used = 1 WHERE id = ?',
+                                [row.id],
+                                (markErr) => {
+                                    if (markErr) {
+                                        // La contraseña ya se actualizó; reportar pero no fallar
+                                        console.error('Warning: no se pudo marcar token como usado:', markErr.message);
+                                    }
+                                    res.json({ message: 'Contraseña restablecida correctamente' });
+                                }
+                            );
+                        }
+                    );
+                });
+            } catch (hashError) {
+                res.status(500).json({ error: 'Error interno del servidor' });
+            }
+        }
+    );
 });
 
 module.exports = { router, authenticateToken, requireAdmin, JWT_SECRET }; 

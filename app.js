@@ -8,15 +8,227 @@ class MailingApp {
         this.isEditingMasterSection = false; // Nueva variable de estado
         this.editingSectionId = null; // ID de la sección que se está editando
         this.masterSections = [];
-        
+        this.selectedSectionIndex = null; // índice de sección seleccionada en el canvas
+        this.canvasViewport = 'desktop'; // 'desktop' | 'mobile'
+
         this.init();
+    }
+
+    // Cambia el ancho del papel en el editor (escritorio/móvil)
+    setCanvasViewport(mode) {
+        if (mode !== 'desktop' && mode !== 'mobile') return;
+        this.canvasViewport = mode;
+        const canvas = document.querySelector('.editor-canvas');
+        if (canvas) canvas.dataset.viewport = mode;
+        document.querySelectorAll('.viewport-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.viewport === mode);
+        });
     }
     
     init() {
         this.setupEventListeners();
+        this.setupAuthListeners();
+
+        // Si venimos de un link de reset, el flujo de reset tiene prioridad:
+        // limpiamos cualquier sesión previa y saltamos checkAuthStatus (que
+        // abriría el dashboard antes de que termine la validación del token).
+        const params = new URLSearchParams(window.location.search);
+        const isResetPath = window.location.pathname === '/reset-password';
+        const hasResetToken = params.get('token');
+
+        if (isResetPath && hasResetToken) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            this.showLoginScreen();
+            this.checkResetTokenInUrl();
+            return;
+        }
+
         this.checkAuthStatus();
     }
-    
+
+    setupAuthListeners() {
+        const byId = (id) => document.getElementById(id);
+
+        const forgotLink = byId('forgotPasswordLink');
+        if (forgotLink) {
+            forgotLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showLoginPanel('forgot');
+            });
+        }
+
+        const forgotForm = byId('forgotForm');
+        if (forgotForm) {
+            forgotForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.requestPasswordReset();
+            });
+        }
+
+        const backFromForgot = byId('backToLoginFromForgot');
+        if (backFromForgot) {
+            backFromForgot.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showLoginPanel('login');
+            });
+        }
+
+        const backFromResult = byId('backToLoginFromResult');
+        if (backFromResult) {
+            backFromResult.addEventListener('click', () => this.showLoginPanel('login'));
+        }
+
+        const copyForgotUrlBtn = byId('copyForgotUrlBtn');
+        if (copyForgotUrlBtn) {
+            copyForgotUrlBtn.addEventListener('click', () => {
+                const input = byId('forgotResultUrl');
+                if (!input) return;
+                input.select();
+                navigator.clipboard.writeText(input.value).then(() => {
+                    this.showNotification('Link copiado al portapapeles', 'success');
+                });
+            });
+        }
+
+        const resetForm = byId('resetForm');
+        if (resetForm) {
+            resetForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.submitPasswordReset();
+            });
+        }
+    }
+
+    checkResetTokenInUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        const isResetPath = window.location.pathname === '/reset-password';
+        if (!token || !isResetPath) return;
+
+        this.resetToken = token;
+        fetch(`${this.apiBaseUrl}/auth/validate-reset-token/${encodeURIComponent(token)}`)
+            .then(r => r.json().then(data => ({ ok: r.ok, data })))
+            .then(({ ok, data }) => {
+                if (!ok || !data.valid) {
+                    this.showNotification(data.reason || 'Link de reset inválido o expirado', 'error');
+                    this.showLoginPanel('login');
+                    history.replaceState(null, '', '/');
+                    return;
+                }
+                const subtitle = document.getElementById('loginHeaderSubtitle');
+                const title = document.getElementById('loginHeaderTitle');
+                if (title) title.textContent = `Hola, ${data.username}`;
+                if (subtitle) subtitle.textContent = 'Establece una nueva contraseña para tu cuenta';
+                this.showLoginPanel('reset');
+            })
+            .catch(() => {
+                this.showNotification('No se pudo validar el link de reset', 'error');
+                this.showLoginPanel('login');
+            });
+    }
+
+    async requestPasswordReset() {
+        const email = document.getElementById('forgotEmail').value.trim();
+        if (!email) return;
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/auth/forgot-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                this.showNotification(data.error || 'Error solicitando reset', 'error');
+                return;
+            }
+
+            // Si el backend incluye resetUrl, mostramos el link en la UI
+            if (data.resetUrl) {
+                const fullUrl = `${window.location.origin}${data.resetUrl}`;
+                const input = document.getElementById('forgotResultUrl');
+                if (input) input.value = fullUrl;
+                this.showLoginPanel('result');
+            } else {
+                this.showNotification(data.message || 'Revisa tu email', 'info');
+                this.showLoginPanel('login');
+            }
+        } catch (err) {
+            this.showNotification('Error de red solicitando reset', 'error');
+        }
+    }
+
+    async submitPasswordReset() {
+        const pwd = document.getElementById('resetPassword').value;
+        const pwd2 = document.getElementById('resetPasswordConfirm').value;
+        console.log('🔑 submitPasswordReset', { hasToken: !!this.resetToken, pwdLen: pwd.length });
+
+        if (!this.resetToken) {
+            this.showNotification('Falta el token de reset. Abre el link del email nuevamente.', 'error');
+            return;
+        }
+        if (pwd !== pwd2) {
+            this.showNotification('Las contraseñas no coinciden', 'error');
+            return;
+        }
+        if (pwd.length < 6) {
+            this.showNotification('La contraseña debe tener al menos 6 caracteres', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/auth/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: this.resetToken, newPassword: pwd })
+            });
+            const data = await response.json();
+            console.log('🔑 reset-password respuesta:', response.status, data);
+
+            if (!response.ok) {
+                this.showNotification(data.error || 'Error restableciendo contraseña', 'error');
+                return;
+            }
+            this.showNotification('Contraseña actualizada. Inicia sesión con la nueva.', 'success');
+            history.replaceState(null, '', '/');
+            this.resetToken = null;
+            document.getElementById('loginHeaderTitle').textContent = 'Bienvenido';
+            document.getElementById('loginHeaderSubtitle').textContent = 'Inicia sesión para gestionar tus newsletters';
+            this.showLoginPanel('login');
+        } catch (err) {
+            console.error('🔑 reset-password error:', err);
+            this.showNotification('Error de red restableciendo contraseña', 'error');
+        }
+    }
+
+    // Cambia qué panel se muestra dentro de la pantalla de login
+    // Valores: 'login' | 'register' | 'forgot' | 'result' | 'reset'
+    showLoginPanel(panel) {
+        const panelMap = {
+            login: 'loginForm',
+            register: 'registerForm',
+            forgot: 'forgotForm',
+            result: 'forgotResult',
+            reset: 'resetForm'
+        };
+        document.querySelectorAll('.login-form').forEach(el => el.classList.remove('active'));
+        const target = document.getElementById(panelMap[panel]);
+        if (target) target.classList.add('active');
+
+        // Tabs visibles solo en login/register
+        const tabs = document.getElementById('loginTabs');
+        if (tabs) {
+            tabs.style.display = (panel === 'login' || panel === 'register') ? '' : 'none';
+        }
+        if (panel === 'login' || panel === 'register') {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === panel);
+            });
+        }
+    }
+
     setupEventListeners() {
         // Login/Register tabs
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -24,13 +236,13 @@ class MailingApp {
                 this.switchTab(e.target.dataset.tab);
             });
         });
-        
+
         // Login form
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
             this.login();
         });
-        
+
         // Register form
         document.getElementById('registerForm').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -264,15 +476,7 @@ class MailingApp {
     
     // UI methods
     switchTab(tab) {
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-        
-        document.querySelectorAll('.login-form').forEach(form => {
-            form.classList.remove('active');
-        });
-        document.getElementById(`${tab}Form`).classList.add('active');
+        this.showLoginPanel(tab);
     }
     
     showLoginScreen() {
@@ -484,6 +688,7 @@ class MailingApp {
                 const data = await response.json();
                 this.currentNewsletter = data.newsletter;
                 this.newsletterSections = data.sections;
+                this.selectedSectionIndex = null;
 
                 document.getElementById('editorTitle').textContent = `Editor: ${data.newsletter.name}`;
                 this.switchView('newsletterEditor');
@@ -767,51 +972,149 @@ class MailingApp {
     // Newsletter editor methods
     renderNewsletterEditor() {
         console.log('🎨 Renderizando editor de newsletter...');
-        
+
         // Renderizar secciones existentes
         this.renderNewsletterSections();
-        
+
         // Renderizar secciones disponibles
         this.renderAvailableSections();
+
+        // Renderizar panel de propiedades (derecha)
+        this.renderPropertiesPanel();
     }
     
     renderNewsletterSections() {
         const container = document.getElementById('newsletterContainer');
-        
+
+        // Handlers de drop se registran una sola vez
+        this.attachCanvasDropHandlers(container);
+
         if (!this.newsletterSections || this.newsletterSections.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-plus-circle"></i>
-                    <p>Arrastra secciones aquí para construir tu newsletter</p>
+                    <p>Arrastra bloques aquí para construir tu newsletter</p>
                 </div>
             `;
             return;
         }
-        
-        container.innerHTML = this.newsletterSections.map((section, index) => `
-            <div class="newsletter-section" data-section-id="${section.id}" data-index="${index}">
-                <div class="section-header">
-                    <span class="section-type">${section.section_type}</span>
-                    <div class="section-controls">
-                        <button class="edit-section-btn" onclick="app.editNewsletterSection(${section.id})" title="Editar sección">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="move-up-btn" onclick="app.moveSectionUp(${index})" title="Mover arriba" ${index === 0 ? 'disabled' : ''}>
-                            <i class="fas fa-arrow-up"></i>
-                        </button>
-                        <button class="move-down-btn" onclick="app.moveSectionDown(${index})" title="Mover abajo" ${index === this.newsletterSections.length - 1 ? 'disabled' : ''}>
-                            <i class="fas fa-arrow-down"></i>
-                        </button>
-                        <button class="remove-section-btn" onclick="app.removeSectionFromNewsletter(${index})" title="Eliminar sección">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
+
+        container.innerHTML = this.newsletterSections.map((section, index) => {
+            const isSelected = this.selectedSectionIndex === index;
+            return `
+            <div class="newsletter-section${isSelected ? ' selected' : ''}"
+                data-section-id="${section.id}"
+                data-index="${index}"
+                draggable="true"
+                ondragstart="app.handleCanvasDragStart(event, ${index})"
+                ondragend="app.handleCanvasDragEnd(event)"
+                onclick="app.selectSection(${index}); event.stopPropagation();">
                 <div class="section-content">
                     ${section.content.html}
                 </div>
+            </div>`;
+        }).join('');
+    }
+
+    attachCanvasDropHandlers(container) {
+        if (!container || container.dataset.dropBound === '1') return;
+        container.dataset.dropBound = '1';
+        container.addEventListener('dragover', (e) => this.handleDragOver(e));
+        container.addEventListener('drop', (e) => this.handleDrop(e));
+        container.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+        // Click en zona vacía del canvas deselecciona
+        container.addEventListener('click', (e) => {
+            if (e.target === container) {
+                this.selectSection(null);
+            }
+        });
+    }
+
+    // Selección de sección en el canvas
+    selectSection(index) {
+        this.selectedSectionIndex = index;
+        this.renderNewsletterSections();
+        this.renderPropertiesPanel();
+    }
+
+    // Panel de propiedades (columna derecha)
+    renderPropertiesPanel() {
+        const panel = document.getElementById('propertiesPanel');
+        if (!panel) return;
+
+        const idx = this.selectedSectionIndex;
+        const section = (idx !== null && idx >= 0) ? this.newsletterSections[idx] : null;
+
+        if (!section) {
+            panel.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-sliders-h"></i>
+                    <p>Selecciona un bloque para editar sus propiedades</p>
+                </div>
+            `;
+            return;
+        }
+
+        const total = this.newsletterSections.length;
+        const canMoveUp = idx > 0;
+        const canMoveDown = idx < total - 1;
+        const customizedBadge = section.is_customized
+            ? '<span class="prop-badge prop-badge-warning" title="Modificada respecto a la maestra">personalizada</span>'
+            : '';
+
+        panel.innerHTML = `
+            <div class="prop-section">
+                <div class="prop-label">Tipo</div>
+                <div class="prop-type-row">
+                    <span class="prop-type-badge">${section.section_type}</span>
+                    ${customizedBadge}
+                </div>
             </div>
-        `).join('');
+
+            <div class="prop-section">
+                <label class="prop-label" for="propTitle">Título</label>
+                <input type="text" id="propTitle" class="prop-input" value="${this.escapeAttr(section.title || '')}" onblur="app.updateSelectedSectionTitle(this.value)">
+            </div>
+
+            <div class="prop-section">
+                <div class="prop-label">Posición</div>
+                <div class="prop-position-row">
+                    <button class="prop-btn prop-btn-secondary" onclick="app.moveSectionUp(${idx})" ${canMoveUp ? '' : 'disabled'} title="Mover arriba">
+                        <i class="fas fa-arrow-up"></i>
+                    </button>
+                    <span class="prop-position-indicator">${idx + 1} / ${total}</span>
+                    <button class="prop-btn prop-btn-secondary" onclick="app.moveSectionDown(${idx})" ${canMoveDown ? '' : 'disabled'} title="Mover abajo">
+                        <i class="fas fa-arrow-down"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="prop-section prop-actions">
+                <button class="prop-btn prop-btn-primary" onclick="app.editNewsletterSection(${section.id})">
+                    <i class="fas fa-code"></i> Editar contenido
+                </button>
+                <button class="prop-btn prop-btn-danger" onclick="app.removeSectionFromNewsletter(${idx})">
+                    <i class="fas fa-trash"></i> Eliminar bloque
+                </button>
+            </div>
+        `;
+    }
+
+    // Escapa valores para usar en atributos HTML (evita romper quotes)
+    escapeAttr(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    // Actualiza el título de la sección seleccionada desde el panel
+    updateSelectedSectionTitle(newTitle) {
+        const idx = this.selectedSectionIndex;
+        if (idx === null || !this.newsletterSections[idx]) return;
+        this.newsletterSections[idx].title = newTitle;
     }
     
     renderAvailableSections() {
@@ -831,7 +1134,11 @@ class MailingApp {
         }
 
         container.innerHTML = this.masterSections.map(section => `
-            <div class="available-section" data-section-id="${section.id}">
+            <div class="available-section"
+                data-section-id="${section.id}"
+                draggable="true"
+                ondragstart="app.handleSidebarDragStart(event, ${section.id})"
+                ondragend="app.handleCanvasDragEnd(event)">
                 <div class="section-info">
                     <h4>${section.name}</h4>
                     <p class="section-type">${section.type}</p>
@@ -845,10 +1152,120 @@ class MailingApp {
             </div>
         `).join('');
     }
+
+    // ========== Drag & drop ==========
+    handleSidebarDragStart(e, masterSectionId) {
+        e.dataTransfer.effectAllowed = 'copy';
+        e.dataTransfer.setData('application/x-master-id', String(masterSectionId));
+        this.dragSource = 'sidebar';
+    }
+
+    handleCanvasDragStart(e, index) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('application/x-section-index', String(index));
+        this.dragSource = 'canvas';
+        e.currentTarget.classList.add('dragging');
+    }
+
+    handleCanvasDragEnd(e) {
+        if (e.currentTarget && e.currentTarget.classList) {
+            e.currentTarget.classList.remove('dragging');
+        }
+        this.clearDropIndicators();
+        this.dragInsertionIndex = null;
+        this.dragSource = null;
+    }
+
+    handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = this.dragSource === 'canvas' ? 'move' : 'copy';
+
+        const container = document.getElementById('newsletterContainer');
+        const sections = Array.from(container.querySelectorAll('.newsletter-section'));
+
+        sections.forEach(s => s.classList.remove('drop-before', 'drop-after'));
+        container.classList.remove('drop-empty');
+
+        if (sections.length === 0) {
+            container.classList.add('drop-empty');
+            this.dragInsertionIndex = 0;
+            return;
+        }
+
+        const y = e.clientY;
+        let insertionIndex = sections.length;
+        for (let i = 0; i < sections.length; i++) {
+            const rect = sections[i].getBoundingClientRect();
+            if (y < rect.top + rect.height / 2) {
+                insertionIndex = i;
+                break;
+            }
+        }
+        this.dragInsertionIndex = insertionIndex;
+
+        if (insertionIndex < sections.length) {
+            sections[insertionIndex].classList.add('drop-before');
+        } else {
+            sections[sections.length - 1].classList.add('drop-after');
+        }
+    }
+
+    handleDragLeave(e) {
+        const container = document.getElementById('newsletterContainer');
+        if (!container) return;
+        if (!container.contains(e.relatedTarget)) {
+            this.clearDropIndicators();
+        }
+    }
+
+    handleDrop(e) {
+        e.preventDefault();
+        const masterId = e.dataTransfer.getData('application/x-master-id');
+        const sectionIndexRaw = e.dataTransfer.getData('application/x-section-index');
+        const targetIndex = this.dragInsertionIndex ?? this.newsletterSections.length;
+
+        this.clearDropIndicators();
+
+        if (masterId) {
+            this.addSectionToNewsletter(parseInt(masterId, 10), targetIndex);
+        } else if (sectionIndexRaw !== '') {
+            this.reorderSection(parseInt(sectionIndexRaw, 10), targetIndex);
+        }
+
+        this.dragInsertionIndex = null;
+        this.dragSource = null;
+    }
+
+    clearDropIndicators() {
+        const container = document.getElementById('newsletterContainer');
+        if (!container) return;
+        container.classList.remove('drop-empty');
+        container.querySelectorAll('.drop-before, .drop-after').forEach(el => {
+            el.classList.remove('drop-before', 'drop-after');
+        });
+    }
+
+    reorderSection(fromIndex, toIndex) {
+        if (fromIndex < 0 || fromIndex >= this.newsletterSections.length) return;
+        // Drop sobre la misma posición o justo después (no-op)
+        if (fromIndex === toIndex || fromIndex + 1 === toIndex) return;
+
+        const [moved] = this.newsletterSections.splice(fromIndex, 1);
+        const adjustedTo = fromIndex < toIndex ? toIndex - 1 : toIndex;
+        this.newsletterSections.splice(adjustedTo, 0, moved);
+
+        this.newsletterSections.forEach((section, i) => {
+            section.order = i;
+        });
+
+        this.selectedSectionIndex = adjustedTo;
+        this.renderNewsletterEditor();
+        this.showNotification('Bloques reordenados', 'info');
+    }
     
     // Agregar sección al newsletter
-    async addSectionToNewsletter(sectionId) {
-        console.log('➕ Agregando sección al newsletter:', sectionId);
+    async addSectionToNewsletter(sectionId, insertIndex = null) {
+        console.log('➕ Agregando sección al newsletter:', sectionId, 'en índice', insertIndex);
         
         try {
             // Buscar la sección maestra
@@ -868,12 +1285,21 @@ class MailingApp {
                 order: this.newsletterSections.length
             };
             
-            // Agregar al array local
-            this.newsletterSections.push(newsletterSection);
-            
+            // Insertar en la posición indicada (o al final si no se especifica)
+            const insertAt = (typeof insertIndex === 'number' && insertIndex >= 0 && insertIndex <= this.newsletterSections.length)
+                ? insertIndex
+                : this.newsletterSections.length;
+            this.newsletterSections.splice(insertAt, 0, newsletterSection);
+
+            // Recalcular órdenes
+            this.newsletterSections.forEach((s, i) => { s.order = i; });
+
+            // Seleccionar el bloque recién agregado
+            this.selectedSectionIndex = insertAt;
+
             // Actualizar la vista
             this.renderNewsletterEditor();
-            
+
             this.showNotification('Sección agregada al newsletter', 'success');
             
         } catch (error) {
@@ -1059,48 +1485,65 @@ class MailingApp {
             const temp = this.newsletterSections[index];
             this.newsletterSections[index] = this.newsletterSections[index - 1];
             this.newsletterSections[index - 1] = temp;
-            
-            // Actualizar órdenes
+
             this.newsletterSections.forEach((section, i) => {
                 section.order = i;
             });
-            
+
+            // Selección sigue al bloque movido
+            if (this.selectedSectionIndex === index) {
+                this.selectedSectionIndex = index - 1;
+            } else if (this.selectedSectionIndex === index - 1) {
+                this.selectedSectionIndex = index;
+            }
+
             this.renderNewsletterEditor();
             this.showNotification('Sección movida hacia arriba', 'info');
         } else {
             this.showNotification('No se puede mover esta sección hacia arriba', 'warning');
         }
     }
-    
+
     // Mover sección hacia abajo
     moveSectionDown(index) {
         if (index >= 0 && index < this.newsletterSections.length - 1) {
             const temp = this.newsletterSections[index];
             this.newsletterSections[index] = this.newsletterSections[index + 1];
             this.newsletterSections[index + 1] = temp;
-            
-            // Actualizar órdenes
+
             this.newsletterSections.forEach((section, i) => {
                 section.order = i;
             });
-            
+
+            if (this.selectedSectionIndex === index) {
+                this.selectedSectionIndex = index + 1;
+            } else if (this.selectedSectionIndex === index + 1) {
+                this.selectedSectionIndex = index;
+            }
+
             this.renderNewsletterEditor();
             this.showNotification('Sección movida hacia abajo', 'info');
         } else {
             this.showNotification('No se puede mover esta sección hacia abajo', 'warning');
         }
     }
-    
+
     // Eliminar sección del newsletter
     removeSectionFromNewsletter(index) {
         if (confirm('¿Estás seguro de que quieres eliminar esta sección del newsletter?')) {
             this.newsletterSections.splice(index, 1);
-            
-            // Actualizar órdenes
+
             this.newsletterSections.forEach((section, i) => {
                 section.order = i;
             });
-            
+
+            // Ajustar selección tras eliminar
+            if (this.selectedSectionIndex === index) {
+                this.selectedSectionIndex = null;
+            } else if (this.selectedSectionIndex !== null && this.selectedSectionIndex > index) {
+                this.selectedSectionIndex -= 1;
+            }
+
             this.renderNewsletterEditor();
             this.showNotification('Sección eliminada del newsletter', 'success');
         }

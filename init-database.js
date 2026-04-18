@@ -68,6 +68,17 @@ CREATE TABLE IF NOT EXISTS templates (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )`;
 
+// Tabla de tokens para reset de contraseña (expiran en 1h)
+const createPasswordResetTokensTable = `
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token TEXT UNIQUE NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`;
+
 // Ejecutar creación de tablas
 db.serialize(() => {
     // Crear tabla usuarios
@@ -112,6 +123,15 @@ db.serialize(() => {
             console.error('❌ Error creando tabla templates:', err.message);
         } else {
             console.log('✅ Tabla templates creada/verificada');
+        }
+    });
+
+    // Crear tabla password_reset_tokens
+    db.run(createPasswordResetTokensTable, (err) => {
+        if (err) {
+            console.error('❌ Error creando tabla password_reset_tokens:', err.message);
+        } else {
+            console.log('✅ Tabla password_reset_tokens creada/verificada');
         }
     });
 

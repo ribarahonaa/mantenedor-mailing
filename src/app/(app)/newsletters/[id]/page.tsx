@@ -1,12 +1,14 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { db, schema } from "@/lib/db";
 import { requireSession } from "@/lib/session";
 import { ViewHeader } from "@/components/view-header";
-import { Placeholder } from "@/components/placeholder";
 import { NewsletterMetaForm } from "./meta-form";
+import { NewsletterEditor } from "@/components/editor/newsletter-editor";
+
+type Content = { html: string };
 
 export default async function NewsletterEditorPage({
   params,
@@ -28,6 +30,35 @@ export default async function NewsletterEditorPage({
     .get();
 
   if (!newsletter) notFound();
+
+  const sectionsRaw = await db
+    .select()
+    .from(schema.newsletterSections)
+    .where(eq(schema.newsletterSections.newsletterId, newsletter.id))
+    .orderBy(asc(schema.newsletterSections.sectionOrder))
+    .all();
+
+  const sections = sectionsRaw.map((s) => ({
+    id: s.id,
+    masterSectionId: s.masterSectionId,
+    sectionType: s.sectionType,
+    title: s.title,
+    content: (s.content as Content) ?? { html: "" },
+    sectionOrder: s.sectionOrder,
+    isCustomized: s.isCustomized,
+  }));
+
+  const masterBlocksRaw = await db
+    .select({
+      id: schema.masterSections.id,
+      name: schema.masterSections.name,
+      type: schema.masterSections.type,
+      title: schema.masterSections.title,
+    })
+    .from(schema.masterSections)
+    .where(eq(schema.masterSections.isActive, true))
+    .orderBy(asc(schema.masterSections.type), asc(schema.masterSections.name))
+    .all();
 
   return (
     <div className="space-y-6">
@@ -55,9 +86,10 @@ export default async function NewsletterEditorPage({
         />
       </section>
 
-      <Placeholder
-        title="Editor visual en Fase 6"
-        description="Canvas tipo papel, sidebar de bloques, panel de propiedades y drag & drop."
+      <NewsletterEditor
+        newsletterId={newsletter.id}
+        initialSections={sections}
+        masterBlocks={masterBlocksRaw}
       />
     </div>
   );

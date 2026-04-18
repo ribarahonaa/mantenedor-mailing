@@ -9,7 +9,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Mantenedor de Mailings",
-  description: "Editor visual de newsletters — Innk",
+  description: "Editor visual de newsletters",
 };
 
 export default function RootLayout({

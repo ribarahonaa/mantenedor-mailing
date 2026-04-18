@@ -1,4 +1,4 @@
-# 🚀 Mantenedor de Mailings - Innk
+# 🚀 Mantenedor de Mailings
 
 Un sistema profesional para la gestión de newsletters con sistema de usuarios, secciones maestras y gestión de contenido personalizado.
 
@@ -287,6 +287,4 @@ Este proyecto está bajo la licencia MIT. Ver el archivo LICENSE para más detal
 
 ---
 
-**Desarrollado con ❤️ por el equipo de Innk**
-
-*Sistema profesional para la gestión de newsletters empresariales* 
+*Sistema profesional para la gestión de newsletters empresariales*

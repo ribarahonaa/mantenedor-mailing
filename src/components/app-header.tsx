@@ -22,7 +22,7 @@ export function AppHeader({
             <Mail className="h-4 w-4" />
           </span>
           <span className="text-lg font-semibold tracking-tight">
-            Innk Mailing
+            Mantenedor de Mailings
           </span>
         </Link>
 

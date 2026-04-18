@@ -92,7 +92,7 @@ export default function LoginPage() {
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/20 bg-white/15 backdrop-blur">
               <Mail className="h-5 w-5" />
             </span>
-            Innk Mailing
+            Mantenedor de Mailings
           </div>
           <h1 className="text-4xl font-bold leading-tight tracking-tight">
             Newsletters que enganchan, sin fricción.

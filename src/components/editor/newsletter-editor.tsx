@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Monitor, Smartphone, GripVertical, Trash2, Sliders, Save, Pencil } from "lucide-react";
+import { Monitor, Smartphone, GripVertical, Trash2, Sliders, Save, Pencil, Eye, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Modal } from "@/components/modal";
 import { HtmlEditor } from "@/components/html-editor";
@@ -36,10 +36,12 @@ type Viewport = "desktop" | "mobile";
 
 export function NewsletterEditor({
   newsletterId,
+  newsletterName,
   initialSections,
   masterBlocks,
 }: {
   newsletterId: number;
+  newsletterName: string;
   initialSections: SectionRow[];
   masterBlocks: MasterBlock[];
 }) {
@@ -54,6 +56,8 @@ export function NewsletterEditor({
   const dragRef = useRef<{ kind: "master"; masterId: number } | { kind: "section"; sectionId: number } | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
   const [dropAtEnd, setDropAtEnd] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const selected = sections.find((s) => s.id === selectedId) ?? null;
 
@@ -179,6 +183,40 @@ export function NewsletterEditor({
     });
   }
 
+  function buildFullHtml() {
+    const body = sections.map((s) => s.content.html).join("\n");
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(newsletterName)}</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f4f4;">
+<tr><td align="center" style="padding:20px 0;">
+<table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background:#ffffff;max-width:600px;">
+<tr><td>
+${body}
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+  }
+
+  async function handleCopyHtml() {
+    const html = buildFullHtml();
+    try {
+      await navigator.clipboard.writeText(html);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      handleError("No se pudo copiar al portapapeles");
+    }
+  }
+
   function handleSaveHtml(id: number, html: string) {
     setSections((curr) =>
       curr.map((s) =>
@@ -247,10 +285,36 @@ export function NewsletterEditor({
           onDragOver={handleDragOverContainer}
           onDrop={handleDrop}
         >
-          {/* Toolbar de viewport */}
-          <div className="inline-flex rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-1 shadow-xs">
-            <ViewportBtn active={viewport === "desktop"} onClick={() => setViewport("desktop")} icon={Monitor} label="Escritorio" />
-            <ViewportBtn active={viewport === "mobile"} onClick={() => setViewport("mobile")} icon={Smartphone} label="Móvil" />
+          {/* Toolbar: acciones + viewport */}
+          <div className="flex w-full max-w-[600px] flex-wrap items-center justify-between gap-2">
+            <div className="inline-flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(true)}
+                disabled={sections.length === 0}
+                className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm font-medium text-[var(--color-text-muted)] shadow-xs transition hover:border-[var(--color-accent-soft)] hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)] disabled:opacity-50"
+              >
+                <Eye className="h-4 w-4" /> Vista previa
+              </button>
+              <button
+                type="button"
+                onClick={handleCopyHtml}
+                disabled={sections.length === 0}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium shadow-xs transition disabled:opacity-50",
+                  copied
+                    ? "border-[var(--color-success)] bg-[var(--color-success-soft)] text-[var(--color-success)]"
+                    : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-accent-soft)] hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)]"
+                )}
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? "Copiado" : "Copiar HTML"}
+              </button>
+            </div>
+            <div className="inline-flex rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-1 shadow-xs">
+              <ViewportBtn active={viewport === "desktop"} onClick={() => setViewport("desktop")} icon={Monitor} label="Escritorio" />
+              <ViewportBtn active={viewport === "mobile"} onClick={() => setViewport("mobile")} icon={Smartphone} label="Móvil" />
+            </div>
           </div>
 
           {/* Papel */}
@@ -349,11 +413,30 @@ export function NewsletterEditor({
           onSave={(html) => handleSaveHtml(editingHtml.id, html)}
         />
       )}
+
+      {/* Modal de vista previa del mailing completo */}
+      {previewOpen && (
+        <PreviewModal
+          html={buildFullHtml()}
+          viewport={viewport}
+          onClose={() => setPreviewOpen(false)}
+          onCopy={handleCopyHtml}
+          copied={copied}
+        />
+      )}
     </div>
   );
 }
 
 // ==================== Subcomponents ====================
+
+function escapeHtml(str: string) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
 function DropLine() {
   return (
@@ -457,6 +540,73 @@ function PropertiesForm({
         </button>
       </div>
     </div>
+  );
+}
+
+function PreviewModal({
+  html,
+  viewport,
+  onClose,
+  onCopy,
+  copied,
+}: {
+  html: string;
+  viewport: Viewport;
+  onClose: () => void;
+  onCopy: () => void;
+  copied: boolean;
+}) {
+  const [mode, setMode] = useState<Viewport>(viewport);
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="Vista previa del mailing"
+      size="xl"
+      footer={
+        <>
+          <div className="mr-auto inline-flex rounded-md border border-[var(--color-border)] p-1">
+            <ViewportBtn active={mode === "desktop"} onClick={() => setMode("desktop")} icon={Monitor} label="Escritorio" />
+            <ViewportBtn active={mode === "mobile"} onClick={() => setMode("mobile")} icon={Smartphone} label="Móvil" />
+          </div>
+          <button
+            type="button"
+            onClick={onCopy}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition",
+              copied
+                ? "border-[var(--color-success)] bg-[var(--color-success-soft)] text-[var(--color-success)]"
+                : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-accent-soft)] hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)]"
+            )}
+          >
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            {copied ? "Copiado" : "Copiar HTML"}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-accent-hover)]"
+          >
+            Cerrar
+          </button>
+        </>
+      }
+    >
+      <div className="flex justify-center bg-[var(--color-surface-3)] p-6 rounded-md">
+        <iframe
+          key={mode}
+          srcDoc={html}
+          title="Preview"
+          sandbox="allow-same-origin"
+          className="border-0 bg-white shadow-md transition-all"
+          style={{
+            width: mode === "mobile" ? 375 : 600,
+            maxWidth: "100%",
+            height: "70vh",
+          }}
+        />
+      </div>
+    </Modal>
   );
 }
 

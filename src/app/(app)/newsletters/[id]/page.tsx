@@ -88,6 +88,7 @@ export default async function NewsletterEditorPage({
 
       <NewsletterEditor
         newsletterId={newsletter.id}
+        newsletterName={newsletter.name}
         initialSections={sections}
         masterBlocks={masterBlocksRaw}
       />

@@ -27,6 +27,21 @@ export function FilterForm({
   const [updatedFrom, setUpdatedFrom] = useState(defaults.updatedFrom ?? "");
   const [updatedTo, setUpdatedTo] = useState(defaults.updatedTo ?? "");
 
+  // Al elegir "Desde": si "Hasta" está vacío o quedó antes del nuevo "Desde",
+  // lo seteamos al mismo valor. Si "Hasta" ya tiene una fecha posterior válida,
+  // la respetamos.
+  function handleFromChange(
+    value: string,
+    currentTo: string,
+    setFrom: (v: string) => void,
+    setTo: (v: string) => void
+  ) {
+    setFrom(value);
+    if (value && (!currentTo || currentTo < value)) {
+      setTo(value);
+    }
+  }
+
   const input =
     "w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm transition focus:outline-none focus:border-[var(--color-accent)] focus:ring-3 focus:ring-[var(--color-accent-ring)]";
   const labelCls = "block space-y-1";
@@ -82,7 +97,9 @@ export function FilterForm({
                 name="createdFrom"
                 value={createdFrom}
                 max={createdTo || undefined}
-                onChange={(e) => setCreatedFrom(e.target.value)}
+                onChange={(e) =>
+                  handleFromChange(e.target.value, createdTo, setCreatedFrom, setCreatedTo)
+                }
                 className={input}
               />
             </label>
@@ -110,7 +127,9 @@ export function FilterForm({
                 name="updatedFrom"
                 value={updatedFrom}
                 max={updatedTo || undefined}
-                onChange={(e) => setUpdatedFrom(e.target.value)}
+                onChange={(e) =>
+                  handleFromChange(e.target.value, updatedTo, setUpdatedFrom, setUpdatedTo)
+                }
                 className={input}
               />
             </label>

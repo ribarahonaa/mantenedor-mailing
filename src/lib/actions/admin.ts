@@ -1,17 +1,93 @@
 "use server";
 
-import { asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, like, lte, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import type { SectionContent } from "@/lib/db/schema";
 
+export type NewsletterFilters = {
+  name?: string;
+  username?: string;
+  createdFrom?: string;
+  createdTo?: string;
+  updatedFrom?: string;
+  updatedTo?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+export type AdminNewsletterRow = {
+  id: number;
+  name: string;
+  description: string | null;
+  ownerId: number;
+  ownerUsername: string;
+  ownerEmail: string;
+  updatedAt: string;
+  createdAt: string;
+  sectionsCount: number;
+};
+
+export type ListAllNewslettersResult = {
+  rows: AdminNewsletterRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 100;
+
 /**
- * Lista todos los newsletters del sistema con el nombre del owner
- * y la cantidad de bloques. Solo admin.
+ * Lista newsletters con filtros y paginación. Solo admin.
+ * Filtros:
+ *  - name / username: LIKE case-insensitive (contiene)
+ *  - createdFrom/To y updatedFrom/To: rango de fechas (YYYY-MM-DD)
  */
-export async function listAllNewsletters() {
+export async function listAllNewsletters(
+  filters: NewsletterFilters = {}
+): Promise<ListAllNewslettersResult> {
   await requireAdmin();
-  return db
+
+  const page = Math.max(1, Math.floor(filters.page ?? 1));
+  const pageSize = Math.min(
+    MAX_PAGE_SIZE,
+    Math.max(1, Math.floor(filters.pageSize ?? DEFAULT_PAGE_SIZE))
+  );
+
+  const conditions: SQL[] = [];
+  const name = filters.name?.trim();
+  const username = filters.username?.trim();
+
+  if (name) {
+    conditions.push(like(sql`lower(${schema.newsletters.name})`, `%${name.toLowerCase()}%`));
+  }
+  if (username) {
+    conditions.push(like(sql`lower(${schema.users.username})`, `%${username.toLowerCase()}%`));
+  }
+  if (filters.createdFrom) {
+    conditions.push(gte(schema.newsletters.createdAt, filters.createdFrom));
+  }
+  if (filters.createdTo) {
+    conditions.push(lte(schema.newsletters.createdAt, `${filters.createdTo} 23:59:59`));
+  }
+  if (filters.updatedFrom) {
+    conditions.push(gte(schema.newsletters.updatedAt, filters.updatedFrom));
+  }
+  if (filters.updatedTo) {
+    conditions.push(lte(schema.newsletters.updatedAt, `${filters.updatedTo} 23:59:59`));
+  }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [totalRow] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(schema.newsletters)
+    .innerJoin(schema.users, eq(schema.users.id, schema.newsletters.userId))
+    .where(whereClause)
+    .all();
+
+  const rows = await db
     .select({
       id: schema.newsletters.id,
       name: schema.newsletters.name,
@@ -25,8 +101,18 @@ export async function listAllNewsletters() {
     })
     .from(schema.newsletters)
     .innerJoin(schema.users, eq(schema.users.id, schema.newsletters.userId))
+    .where(whereClause)
     .orderBy(desc(schema.newsletters.updatedAt))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize)
     .all();
+
+  return {
+    rows: rows.map((r) => ({ ...r, sectionsCount: Number(r.sectionsCount ?? 0) })),
+    total: Number(totalRow?.n ?? 0),
+    page,
+    pageSize,
+  };
 }
 
 export type AdminStats = {

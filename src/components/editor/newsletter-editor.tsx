@@ -2,9 +2,10 @@
 
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Monitor, Smartphone, GripVertical, Trash2, Sliders, Save, Pencil, Eye, Copy, Check } from "lucide-react";
+import { GripVertical, Trash2, Sliders, Save, Pencil, Eye, Copy, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Modal } from "@/components/modal";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { HtmlEditor } from "@/components/html-editor";
 import {
   addSectionToNewsletter,
@@ -32,8 +33,6 @@ type MasterBlock = {
   title: string;
 };
 
-type Viewport = "desktop" | "mobile";
-
 export function NewsletterEditor({
   newsletterId,
   newsletterName,
@@ -48,16 +47,25 @@ export function NewsletterEditor({
   const router = useRouter();
   const [sections, setSections] = useState<SectionRow[]>(initialSections);
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [viewport, setViewport] = useState<Viewport>("desktop");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [editingHtml, setEditingHtml] = useState<SectionRow | null>(null);
+
+  // Sincroniza el estado local cuando el server component recarga (router.refresh()).
+  // Sin esto, los nuevos bloques insertados no aparecen hasta recargar la página.
+  // Patrón "adjust state on prop change" de react.dev — usa useState, no useEffect.
+  const [lastInitial, setLastInitial] = useState(initialSections);
+  if (lastInitial !== initialSections) {
+    setLastInitial(initialSections);
+    setSections(initialSections);
+  }
 
   const dragRef = useRef<{ kind: "master"; masterId: number } | { kind: "section"; sectionId: number } | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
   const [dropAtEnd, setDropAtEnd] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const selected = sections.find((s) => s.id === selectedId) ?? null;
 
@@ -157,14 +165,18 @@ export function NewsletterEditor({
     clearDrop();
   }
 
-  function handleDeleteSection(id: number) {
-    if (!confirm("¿Eliminar este bloque?")) return;
+  function handleConfirmDeleteSection() {
+    const id = deleteId;
+    if (id == null) return;
     startTransition(async () => {
       const result = await deleteSection(id);
-      if (!result.ok) handleError(result.error);
-      else {
+      if (!result.ok) {
+        handleError(result.error);
+        setDeleteId(null);
+      } else {
         setSections((curr) => curr.filter((s) => s.id !== id));
         if (selectedId === id) setSelectedId(null);
+        setDeleteId(null);
         router.refresh();
       }
     });
@@ -280,50 +292,56 @@ ${body}
 
         {/* === Canvas === */}
         <div
-          data-viewport={viewport}
           className="flex min-h-[calc(100vh-64px-52px-4rem)] flex-col items-center gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-3)] p-5"
           onDragOver={handleDragOverContainer}
           onDrop={handleDrop}
         >
-          {/* Toolbar: acciones + viewport */}
-          <div className="flex w-full max-w-[600px] flex-wrap items-center justify-between gap-2">
-            <div className="inline-flex gap-2">
-              <button
-                type="button"
-                onClick={() => setPreviewOpen(true)}
-                disabled={sections.length === 0}
-                className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm font-medium text-[var(--color-text-muted)] shadow-xs transition hover:border-[var(--color-accent-soft)] hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)] disabled:opacity-50"
-              >
-                <Eye className="h-4 w-4" /> Vista previa
-              </button>
-              <button
-                type="button"
-                onClick={handleCopyHtml}
-                disabled={sections.length === 0}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium shadow-xs transition disabled:opacity-50",
-                  copied
-                    ? "border-[var(--color-success)] bg-[var(--color-success-soft)] text-[var(--color-success)]"
-                    : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-accent-soft)] hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)]"
-                )}
-              >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copied ? "Copiado" : "Copiar HTML"}
-              </button>
-            </div>
-            <div className="inline-flex rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-1 shadow-xs">
-              <ViewportBtn active={viewport === "desktop"} onClick={() => setViewport("desktop")} icon={Monitor} label="Escritorio" />
-              <ViewportBtn active={viewport === "mobile"} onClick={() => setViewport("mobile")} icon={Smartphone} label="Móvil" />
+          {/* Toolbar: acciones + estado de guardado */}
+          <div className="flex w-full max-w-[600px] flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPreviewOpen(true)}
+              disabled={sections.length === 0}
+              className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm font-medium text-[var(--color-text-muted)] shadow-xs transition hover:border-[var(--color-accent-soft)] hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)] disabled:opacity-50"
+            >
+              <Eye className="h-4 w-4" /> Vista previa
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyHtml}
+              disabled={sections.length === 0}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium shadow-xs transition disabled:opacity-50",
+                copied
+                  ? "border-[var(--color-success)] bg-[var(--color-success-soft)] text-[var(--color-success)]"
+                  : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-accent-soft)] hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)]"
+              )}
+            >
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied ? "Copiado" : "Copiar HTML"}
+            </button>
+
+            <div
+              className="ml-auto inline-flex items-center gap-1.5 text-xs text-[var(--color-text-subtle)]"
+              title="Todos los cambios se guardan automáticamente"
+              aria-live="polite"
+            >
+              {pending ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Guardando…
+                </>
+              ) : (
+                <>
+                  <Check className="h-3.5 w-3.5 text-[var(--color-success)]" />
+                  Guardado automáticamente
+                </>
+              )}
             </div>
           </div>
 
           {/* Papel */}
-          <div
-            className={cn(
-              "min-h-[480px] w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-md transition-all",
-              viewport === "mobile" ? "max-w-[375px]" : "max-w-[600px]"
-            )}
-          >
+          <div className="min-h-[480px] w-full max-w-[600px] rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-md">
             {sections.length === 0 ? (
               <div className="flex min-h-[360px] flex-col items-center justify-center rounded-md border border-dashed border-[var(--color-border-strong)] py-12 text-center text-[var(--color-text-subtle)]">
                 <p className="text-sm">Arrastra bloques aquí para construir tu newsletter</p>
@@ -376,10 +394,7 @@ ${body}
             )}
           </div>
 
-          <p className="text-xs text-[var(--color-text-subtle)]">
-            {viewport === "desktop" ? "600px (escritorio)" : "375px (móvil)"}
-            {pending && " · guardando…"}
-          </p>
+          <p className="text-xs text-[var(--color-text-subtle)]">600px</p>
         </div>
 
         {/* === Properties panel === */}
@@ -399,7 +414,7 @@ ${body}
               totalCount={sections.length}
               onTitleBlur={(t) => handleTitleBlur(selected.id, t)}
               onEditHtml={() => setEditingHtml(selected)}
-              onDelete={() => handleDeleteSection(selected.id)}
+              onDelete={() => setDeleteId(selected.id)}
             />
           )}
         </aside>
@@ -418,12 +433,21 @@ ${body}
       {previewOpen && (
         <PreviewModal
           html={buildFullHtml()}
-          viewport={viewport}
           onClose={() => setPreviewOpen(false)}
           onCopy={handleCopyHtml}
           copied={copied}
         />
       )}
+
+      <ConfirmDialog
+        open={deleteId != null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleConfirmDeleteSection}
+        title="Eliminar bloque"
+        description="¿Seguro que quieres eliminar este bloque del newsletter? Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        pending={pending}
+      />
     </div>
   );
 }
@@ -444,34 +468,6 @@ function DropLine() {
       className="absolute left-0 right-0 -top-1.5 z-20 h-1 rounded-full"
       style={{ background: "var(--color-accent)", boxShadow: "0 0 8px var(--color-accent-ring)" }}
     />
-  );
-}
-
-function ViewportBtn({
-  active,
-  onClick,
-  icon: Icon,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition",
-        active
-          ? "bg-[var(--color-accent-soft)] text-[var(--color-accent)]"
-          : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-      )}
-    >
-      <Icon className="h-4 w-4" />
-      {label}
-    </button>
   );
 }
 
@@ -545,18 +541,15 @@ function PropertiesForm({
 
 function PreviewModal({
   html,
-  viewport,
   onClose,
   onCopy,
   copied,
 }: {
   html: string;
-  viewport: Viewport;
   onClose: () => void;
   onCopy: () => void;
   copied: boolean;
 }) {
-  const [mode, setMode] = useState<Viewport>(viewport);
   return (
     <Modal
       open
@@ -565,15 +558,11 @@ function PreviewModal({
       size="xl"
       footer={
         <>
-          <div className="mr-auto inline-flex rounded-md border border-[var(--color-border)] p-1">
-            <ViewportBtn active={mode === "desktop"} onClick={() => setMode("desktop")} icon={Monitor} label="Escritorio" />
-            <ViewportBtn active={mode === "mobile"} onClick={() => setMode("mobile")} icon={Smartphone} label="Móvil" />
-          </div>
           <button
             type="button"
             onClick={onCopy}
             className={cn(
-              "inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition",
+              "mr-auto inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition",
               copied
                 ? "border-[var(--color-success)] bg-[var(--color-success-soft)] text-[var(--color-success)]"
                 : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-accent-soft)] hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)]"
@@ -594,13 +583,12 @@ function PreviewModal({
     >
       <div className="flex justify-center bg-[var(--color-surface-3)] p-6 rounded-md">
         <iframe
-          key={mode}
           srcDoc={html}
           title="Preview"
           sandbox="allow-same-origin"
-          className="border-0 bg-white shadow-md transition-all"
+          className="border-0 bg-white shadow-md"
           style={{
-            width: mode === "mobile" ? 375 : 600,
+            width: 600,
             maxWidth: "100%",
             height: "70vh",
           }}

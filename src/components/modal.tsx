@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 export function Modal({
@@ -31,11 +32,12 @@ export function Modal({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
   const widths = { md: "max-w-xl", lg: "max-w-3xl", xl: "max-w-5xl" } as const;
 
-  return (
+  // Portal al body para evitar que transforms/overflow de ancestros afecten el posicionamiento.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/60 backdrop-blur-[2px] p-6"
       onClick={(e) => {
@@ -62,6 +64,7 @@ export function Modal({
           </footer>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { Pencil, Copy, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { duplicateMasterSection, deleteMasterSection } from "@/lib/actions/master-sections";
+import { ConfirmDialog } from "./confirm-dialog";
 
 type Props = {
   id: number;
@@ -18,6 +19,7 @@ export function MasterSectionCard(props: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   function handleDuplicate() {
     setError(null);
@@ -28,13 +30,17 @@ export function MasterSectionCard(props: Props) {
     });
   }
 
-  function handleDelete() {
-    if (!confirm(`¿Eliminar "${props.name}"? Los newsletters que ya la usan mantendrán su copia.`)) return;
+  function handleConfirmDelete() {
     setError(null);
     startTransition(async () => {
       const result = await deleteMasterSection(props.id);
-      if (!result.ok) setError(result.error);
-      else router.refresh();
+      if (!result.ok) {
+        setError(result.error);
+        setConfirmOpen(false);
+      } else {
+        setConfirmOpen(false);
+        router.refresh();
+      }
     });
   }
 
@@ -84,13 +90,27 @@ export function MasterSectionCard(props: Props) {
         </button>
         <button
           type="button"
-          onClick={handleDelete}
+          onClick={() => setConfirmOpen(true)}
           disabled={pending}
           className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-[var(--color-danger-soft)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-danger)] transition hover:bg-[var(--color-danger)] hover:text-white hover:border-[var(--color-danger)]"
         >
           <Trash2 className="h-3.5 w-3.5" /> Eliminar
         </button>
       </footer>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar sección maestra"
+        description={
+          <>
+            ¿Seguro que quieres eliminar <strong>&quot;{props.name}&quot;</strong>? Los newsletters que ya la usan mantendrán su copia.
+          </>
+        }
+        confirmLabel="Eliminar"
+        pending={pending}
+      />
     </article>
   );
 }

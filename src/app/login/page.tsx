@@ -81,25 +81,30 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
-      <aside className="relative hidden lg:flex items-center justify-center overflow-hidden p-12 text-white"
+    <div
+      className="relative min-h-screen overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(700px 500px at 15% 20%, rgba(255,255,255,0.18), transparent 60%), radial-gradient(600px 500px at 85% 80%, rgba(255,255,255,0.12), transparent 60%), linear-gradient(135deg, #4f46e5 0%, #6366f1 40%, #8b5cf6 100%)",
+      }}
+    >
+      {/* Textura de puntos sutil sobre todo el fondo */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-40"
         style={{
-          background:
-            "radial-gradient(600px 400px at 20% 20%, rgba(255,255,255,0.18), transparent 60%), radial-gradient(500px 400px at 85% 80%, rgba(255,255,255,0.12), transparent 60%), linear-gradient(135deg, #4f46e5 0%, #6366f1 40%, #8b5cf6 100%)",
+          backgroundImage:
+            "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.28) 1px, transparent 0)",
+          backgroundSize: "22px 22px",
         }}
-      >
-        {/* Textura de puntos sutil */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-40"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.28) 1px, transparent 0)",
-            backgroundSize: "22px 22px",
-          }}
-        />
-        <NeuralBackground />
-        <div className="relative z-10 max-w-md space-y-6">
+      />
+
+      {/* Red neuronal cubre todo el viewport; sigue el cursor donde esté */}
+      <NeuralBackground />
+
+      <div className="relative z-10 grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
+        <aside className="hidden lg:flex items-center justify-center p-12 text-white">
+          <div className="max-w-md space-y-6">
           <div className="inline-flex items-center gap-3 text-lg font-semibold">
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/20 bg-white/15 backdrop-blur">
               <Mail className="h-5 w-5" />
@@ -223,6 +228,7 @@ export default function LoginPage() {
           )}
         </div>
       </section>
+      </div>
     </div>
   );
 }

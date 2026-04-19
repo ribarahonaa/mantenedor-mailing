@@ -15,7 +15,6 @@ const createSchema = z.object({
 const updateSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   description: z.string().trim().max(500).optional(),
-  status: z.enum(["draft", "published"]).optional(),
 });
 
 export type ActionResult<T = undefined> =
@@ -30,7 +29,6 @@ export async function listNewsletters() {
       id: schema.newsletters.id,
       name: schema.newsletters.name,
       description: schema.newsletters.description,
-      status: schema.newsletters.status,
       createdAt: schema.newsletters.createdAt,
       updatedAt: schema.newsletters.updatedAt,
       sectionsCount: sql<number>`COALESCE((SELECT COUNT(*) FROM newsletter_sections ns WHERE ns.newsletter_id = newsletters.id), 0)`,
@@ -131,7 +129,6 @@ export async function duplicateNewsletter(id: number): Promise<ActionResult<{ id
       userId: session.userId!,
       name: `${original.name} (copia)`,
       description: original.description,
-      status: "draft",
     })
     .returning({ id: schema.newsletters.id })
     .get();

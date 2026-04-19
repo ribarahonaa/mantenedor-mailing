@@ -16,7 +16,7 @@ async function main() {
 
   console.log(`✓ newsletters: ${newsletters.length}`);
   newsletters.forEach((n) =>
-    console.log(`  - ${n.name} (${n.status}) · user_id=${n.userId}`)
+    console.log(`  - ${n.name} · user_id=${n.userId}`)
   );
 }
 

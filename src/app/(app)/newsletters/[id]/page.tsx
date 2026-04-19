@@ -82,7 +82,6 @@ export default async function NewsletterEditorPage({
           id={newsletter.id}
           initialName={newsletter.name}
           initialDescription={newsletter.description ?? ""}
-          initialStatus={newsletter.status as "draft" | "published"}
         />
       </section>
 

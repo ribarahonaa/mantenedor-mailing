@@ -25,6 +25,7 @@ npm run lint          # ESLint
 npm run db:generate   # drizzle-kit: generar migraciones desde el schema
 npm run db:push       # drizzle-kit: aplicar schema a la DB
 npm run db:studio     # abrir Drizzle Studio
+npm run db:seed       # sembrar los 11 bloques maestros base (idempotente)
 
 npx tsx scripts/smoke-db.ts       # verificar conexión + lectura DB
 npx tsx scripts/reset-admin.ts    # resetear password de admin a admin123

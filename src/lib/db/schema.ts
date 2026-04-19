@@ -35,7 +35,6 @@ export const newsletters = sqliteTable("newsletters", {
   userId: integer("user_id").notNull().references(() => users.id),
   name: text("name").notNull(),
   description: text("description"),
-  status: text("status", { enum: ["draft", "published"] }).notNull().default("draft"),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });

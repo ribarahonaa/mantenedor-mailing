@@ -61,7 +61,7 @@ export function SectionsDonut({ data }: { data: Slice[] }) {
                     borderRadius: 8,
                     fontSize: 12,
                   }}
-                  formatter={(v: number, name: string) => [`${v}`, name]}
+                  formatter={(v, name) => [`${Number(v)}`, String(name)]}
                 />
               </PieChart>
             </ResponsiveContainer>

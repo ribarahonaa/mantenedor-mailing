@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { KeyRound, Loader2, ShieldAlert, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,23 @@ type State =
   | { kind: "done" };
 
 export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center p-6">
+          <div className="flex flex-col items-center gap-3 text-[var(--color-text-muted)]">
+            <Loader2 className="h-8 w-8 animate-spin text-[var(--color-accent)]" />
+            <p className="text-sm">Cargando…</p>
+          </div>
+        </main>
+      }
+    >
+      <ResetPasswordInner />
+    </Suspense>
+  );
+}
+
+function ResetPasswordInner() {
   const params = useSearchParams();
   const router = useRouter();
   const token = params.get("token") ?? "";

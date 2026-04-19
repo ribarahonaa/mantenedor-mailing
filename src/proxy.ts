@@ -14,7 +14,7 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const res = NextResponse.next();
-  const session = await getIronSession<SessionData>(req.cookies, sessionOptions);
+  const session = await getIronSession<SessionData>(res.cookies, sessionOptions);
 
   if (isPublic(pathname)) {
     // Si ya está logueado y entra a /login, lo mandamos al home

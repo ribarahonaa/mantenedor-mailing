@@ -85,7 +85,10 @@ export function ActivityChart({ data }: { data: Point[] }) {
                   fontSize: 12,
                 }}
                 labelStyle={{ color: "var(--color-text-subtle)" }}
-                formatter={(v: number) => [`${v} newsletter${v === 1 ? "" : "s"}`, "Creados"]}
+                formatter={(v) => {
+                  const n = Number(v);
+                  return [`${n} newsletter${n === 1 ? "" : "s"}`, "Creados"];
+                }}
               />
               <Area
                 type="monotone"

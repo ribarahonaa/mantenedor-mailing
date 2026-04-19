@@ -183,38 +183,50 @@ Tras el primer deploy, actualiza `NEXT_PUBLIC_APP_URL` en Vercel a la URL real q
 
 ---
 
-## 5. Verificación post-deploy
+## 5. Bootstrap del admin en prod
+
+Si importaste la DB vía dump (opción A o B de la sección 3), ya tienes un admin con el password hasheado que venía en tu DB local. Si ese password ya no lo recuerdas, o estás desplegando sin dump, **corre el script de bootstrap apuntando a Turso**:
+
+```bash
+DATABASE_URL="libsql://..." \
+DATABASE_AUTH_TOKEN="..." \
+  npm run db:create-admin
+```
+
+El script es idempotente:
+- Si no existe el usuario `admin` → lo crea con role admin y password aleatoria segura (~24 caracteres, base64url).
+- Si ya existe → le resetea el password, lo reactiva y se asegura de que sea admin.
+
+La password se imprime UNA sola vez en stdout — cópiala y guárdala en tu password manager.
+
+Para setear un password específico:
+
+```bash
+DATABASE_URL="..." DATABASE_AUTH_TOKEN="..." \
+  npm run db:create-admin -- "MiPassSuperSeguro!"
+```
+
+También puedes sembrar los bloques maestros base con:
+
+```bash
+DATABASE_URL="..." DATABASE_AUTH_TOKEN="..." npm run db:seed
+```
+
+---
+
+## 6. Verificación post-deploy
 
 ```bash
 # 1. Home redirige a login
 curl -sI https://tu-url.vercel.app/ | grep -i location
 
-# 2. Login funciona
+# 2. Login funciona (usa la password que imprimió db:create-admin)
 curl -s -c /tmp/c.txt -X POST https://tu-url.vercel.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
+  -d '{"username":"admin","password":"TU_PASSWORD"}'
 ```
 
-En navegador: abrir la URL, login con `admin / admin123`, verificar que ves el dashboard con tus newsletters migrados.
-
----
-
-## 6. Cambiar contraseña del admin en prod
-
-**Importante**: la seed del admin tiene password pública `admin123`. Una vez desplegado, cambiarla.
-
-Opción A — desde la UI: login → clic "¿Olvidaste tu contraseña?" → el link que muestra la app contiene el token → abrirlo → setear nueva contraseña.
-
-Opción B — desde CLI usando Turso shell:
-
-```bash
-# Generar hash bcrypt de la nueva clave
-node -e "console.log(require('bcrypt').hashSync('MI_NUEVA_CLAVE_SEGURA', 10))"
-# copia el hash
-
-turso db shell mantenedor-mailing \
-  "UPDATE users SET password_hash = 'HASH_PEGADO_AQUI' WHERE username = 'admin';"
-```
+En navegador: abrir la URL, login con `admin` + tu password, verificar que ves el dashboard.
 
 ---
 

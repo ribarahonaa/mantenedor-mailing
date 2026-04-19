@@ -26,10 +26,11 @@ npm run db:generate   # drizzle-kit: generar migraciones desde el schema
 npm run db:push       # drizzle-kit: aplicar schema a la DB
 npm run db:studio     # abrir Drizzle Studio
 npm run db:seed       # sembrar los 11 bloques maestros base (idempotente)
+npm run db:create-admin                      # crea o resetea admin — password aleatoria segura
+npm run db:create-admin -- "MiPass123!"      # con password específica
+npm run db:create-admin -- "MiPass" "admin@mi-org.com"  # password + email (solo al crear)
 
 npx tsx scripts/smoke-db.ts       # verificar conexión + lectura DB
-npx tsx scripts/reset-admin.ts    # resetear password de admin a admin123
-npx tsx scripts/reset-admin.ts otra-pass   # o a otra
 ```
 
 No hay Docker en v2 (dev directo con Next). Deploy: Vercel + Turso (free tier).

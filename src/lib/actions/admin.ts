@@ -137,7 +137,13 @@ export type AdminStats = {
     users: number;
     newsletters: number;
     activeMasterSections: number;
+    inactiveMasterSections: number;
+    usersLast30: number;
+    newslettersLast30: number;
+    avgBlocksPerNewsletter: number;
   };
+  newslettersByDay: { day: string; count: number }[];
+  sectionsByType: { type: string; count: number }[];
   topUsers: { username: string; email: string; count: number }[];
   topMasterSections: { id: number; name: string; type: string; count: number }[];
 };
@@ -163,6 +169,44 @@ export async function getAdminStats(): Promise<AdminStats> {
     .from(schema.masterSections)
     .where(eq(schema.masterSections.isActive, true))
     .all();
+
+  const [inactiveMastersCount] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(schema.masterSections)
+    .where(eq(schema.masterSections.isActive, false))
+    .all();
+
+  const [usersLast30Row] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(schema.users)
+    .where(sql`${schema.users.createdAt} >= datetime('now', '-30 days')`)
+    .all();
+
+  const [newslettersLast30Row] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(schema.newsletters)
+    .where(sql`${schema.newsletters.createdAt} >= datetime('now', '-30 days')`)
+    .all();
+
+  const [blocksTotalRow] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(schema.newsletterSections)
+    .all();
+
+  const newslettersByDayRaw = (await db.all(sql`
+    SELECT date(created_at) as day, count(*) as n
+    FROM newsletters
+    WHERE created_at >= date('now', '-29 days')
+    GROUP BY day
+    ORDER BY day
+  `)) as { day: string; n: number }[];
+
+  const sectionsByTypeRaw = (await db.all(sql`
+    SELECT section_type as type, count(*) as n
+    FROM newsletter_sections
+    GROUP BY section_type
+    ORDER BY n DESC
+  `)) as { type: string; n: number }[];
 
   const topUsers = await db
     .select({
@@ -195,12 +239,26 @@ export async function getAdminStats(): Promise<AdminStats> {
     .limit(5)
     .all();
 
+  const newslettersTotal = Number(newslettersCount.n ?? 0);
+  const blocksTotal = Number(blocksTotalRow.n ?? 0);
+  const avgBlocks =
+    newslettersTotal > 0 ? Math.round((blocksTotal / newslettersTotal) * 10) / 10 : 0;
+
   return {
     totals: {
       users: Number(usersCount.n ?? 0),
-      newsletters: Number(newslettersCount.n ?? 0),
+      newsletters: newslettersTotal,
       activeMasterSections: Number(activeMastersCount.n ?? 0),
+      inactiveMasterSections: Number(inactiveMastersCount.n ?? 0),
+      usersLast30: Number(usersLast30Row.n ?? 0),
+      newslettersLast30: Number(newslettersLast30Row.n ?? 0),
+      avgBlocksPerNewsletter: avgBlocks,
     },
+    newslettersByDay: fillDayRange(newslettersByDayRaw, 30),
+    sectionsByType: sectionsByTypeRaw.map((s) => ({
+      type: s.type,
+      count: Number(s.n ?? 0),
+    })),
     topUsers: topUsers.map((u) => ({
       username: u.username,
       email: u.email,
@@ -242,4 +300,25 @@ export async function getNewsletterForAdmin(
     name: newsletter.name,
     sectionsHtml: rows.map((r) => (r.content as SectionContent).html ?? ""),
   };
+}
+
+/**
+ * Rellena una serie diaria con 0 en los días sin registros para asegurar
+ * un rango continuo de `days` entradas terminando hoy.
+ */
+function fillDayRange(
+  raw: { day: string; n: number }[],
+  days: number
+): { day: string; count: number }[] {
+  const map = new Map(raw.map((r) => [r.day, Number(r.n ?? 0)]));
+  const out: { day: string; count: number }[] = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    out.push({ day: key, count: map.get(key) ?? 0 });
+  }
+  return out;
 }

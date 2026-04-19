@@ -14,7 +14,11 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const res = NextResponse.next();
-  const session = await getIronSession<SessionData>(res.cookies, sessionOptions);
+  // Overload (req, res): lee la cookie del Cookie header del request y
+  // escribe Set-Cookie en el response. req.cookies (RequestCookies) no
+  // sirve — es read-only y su tipo no calza. res.cookies tampoco — está
+  // vacío al inicio del middleware.
+  const session = await getIronSession<SessionData>(req, res, sessionOptions);
 
   if (isPublic(pathname)) {
     // Si ya está logueado y entra a /login, lo mandamos al home

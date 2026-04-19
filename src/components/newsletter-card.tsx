@@ -6,36 +6,21 @@ import { useState, useTransition } from "react";
 import { Pencil, Copy, Trash2, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { duplicateNewsletter, deleteNewsletter } from "@/lib/actions/newsletters";
+import { ConfirmDialog } from "./confirm-dialog";
 
 type Props = {
   id: number;
   name: string;
   description: string | null;
-  status: "draft" | "published";
   sectionsCount: number;
   updatedAt: string;
-};
-
-const statusStyles: Record<Props["status"], { stripe: string; badgeBg: string; badgeText: string; label: string }> = {
-  draft: {
-    stripe: "var(--color-warning)",
-    badgeBg: "var(--color-warning-soft)",
-    badgeText: "var(--color-warning)",
-    label: "borrador",
-  },
-  published: {
-    stripe: "var(--color-success)",
-    badgeBg: "var(--color-success-soft)",
-    badgeText: "var(--color-success)",
-    label: "publicado",
-  },
 };
 
 export function NewsletterCard(props: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const styles = statusStyles[props.status] ?? statusStyles.draft;
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   function handleDuplicate() {
     setError(null);
@@ -46,40 +31,30 @@ export function NewsletterCard(props: Props) {
     });
   }
 
-  function handleDelete() {
-    if (!confirm(`¿Eliminar "${props.name}"? Esta acción no se puede deshacer.`)) return;
+  function handleConfirmDelete() {
     setError(null);
     startTransition(async () => {
       const result = await deleteNewsletter(props.id);
-      if (!result.ok) setError(result.error);
-      else router.refresh();
+      if (!result.ok) {
+        setError(result.error);
+        setConfirmOpen(false);
+      } else {
+        setConfirmOpen(false);
+        router.refresh();
+      }
     });
   }
 
   return (
     <article
       className={cn(
-        "relative flex flex-col gap-4 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 pl-[calc(1.25rem+4px)] shadow-xs",
+        "relative flex flex-col gap-4 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs",
         "transition hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] hover:shadow-md",
         pending && "pointer-events-none opacity-60"
       )}
     >
-      {/* Stripe de estado */}
-      <span
-        className="absolute left-0 top-0 bottom-0 w-1"
-        style={{ background: styles.stripe }}
-      />
-
       <header className="space-y-1">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="text-lg font-semibold tracking-tight">{props.name}</h3>
-          <span
-            className="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold lowercase"
-            style={{ background: styles.badgeBg, color: styles.badgeText }}
-          >
-            {styles.label}
-          </span>
-        </div>
+        <h3 className="text-lg font-semibold tracking-tight">{props.name}</h3>
         {props.description && (
           <p className="line-clamp-2 text-sm text-[var(--color-text-muted)]">
             {props.description}
@@ -119,13 +94,27 @@ export function NewsletterCard(props: Props) {
         </button>
         <button
           type="button"
-          onClick={handleDelete}
+          onClick={() => setConfirmOpen(true)}
           disabled={pending}
           className="ml-auto inline-flex items-center gap-1.5 rounded-md bg-[var(--color-surface)] border border-[var(--color-danger-soft)] px-3 py-1.5 text-xs font-medium text-[var(--color-danger)] transition hover:bg-[var(--color-danger)] hover:text-white hover:border-[var(--color-danger)]"
         >
           <Trash2 className="h-3.5 w-3.5" /> Eliminar
         </button>
       </footer>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar newsletter"
+        description={
+          <>
+            ¿Seguro que quieres eliminar <strong>&quot;{props.name}&quot;</strong>? Esta acción no se puede deshacer.
+          </>
+        }
+        confirmLabel="Eliminar"
+        pending={pending}
+      />
     </article>
   );
 }

@@ -2,13 +2,8 @@ import Link from "next/link";
 import { Mail } from "lucide-react";
 import { LogoutButton } from "./logout-button";
 
-export function AppHeader({
-  username,
-  role,
-}: {
-  username: string;
-  role: "admin" | "user";
-}) {
+export function AppHeader({ username }: { username: string }) {
+  const displayName = username.charAt(0).toUpperCase() + username.slice(1);
   return (
     <header className="sticky top-0 z-20 relative border-b border-[var(--color-border)] bg-[var(--color-surface)] shadow-xs">
       {/* Banda superior accent→purple */}
@@ -27,11 +22,8 @@ export function AppHeader({
         </Link>
 
         <div className="flex items-center gap-4">
-          <span className="inline-flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
-            <span className="font-medium text-[var(--color-text)]">{username}</span>
-            <span className="inline-flex items-center rounded-full bg-[var(--color-accent-soft)] px-2 py-0.5 text-xs font-semibold text-[var(--color-accent)]">
-              {role}
-            </span>
+          <span className="text-sm text-[var(--color-text-muted)]">
+            Hola <span className="font-medium text-[var(--color-text)]">{displayName}</span>
           </span>
           <LogoutButton />
         </div>

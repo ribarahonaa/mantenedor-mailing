@@ -11,7 +11,7 @@ export default async function AppShellLayout({
 
   return (
     <>
-      <AppHeader username={session.username!} role={session.role!} />
+      <AppHeader username={session.username!} />
       <AppNav role={session.role!} />
       <main className="mx-auto max-w-[1400px] px-6 py-8">{children}</main>
     </>

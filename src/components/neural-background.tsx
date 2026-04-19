@@ -9,6 +9,13 @@ type Node = {
   vy: number;
   ox: number;
   oy: number;
+  // Para el vagabundeo (idle): cada nodo tiene fase y frecuencia propias
+  // para que su órbita alrededor del origen no se sincronice con los demás.
+  phaseX: number;
+  phaseY: number;
+  freqX: number;
+  freqY: number;
+  amp: number;
 };
 
 export function NeuralBackground() {
@@ -24,7 +31,9 @@ export function NeuralBackground() {
     const LINK_DIST = 130;
     const MOUSE_DIST = 200;
     const MOUSE_PULL = 0.0015;
-    const RETURN_PULL = 0.0025; // resorte suave hacia el origen cuando el mouse no está
+    const RETURN_PULL = 0.0025; // resorte suave hacia el target ambiente cuando el mouse no está
+    const IDLE_AMP_BASE = 12; // radio base de la órbita ambiente en px
+    const IDLE_FREQ_BASE = 0.25; // rad/s aprox
 
     const nodes: Node[] = [];
     const mouse = { x: -9999, y: -9999, active: false };
@@ -59,6 +68,11 @@ export function NeuralBackground() {
           oy: y,
           vx: (Math.random() - 0.5) * 0.3,
           vy: (Math.random() - 0.5) * 0.3,
+          phaseX: Math.random() * Math.PI * 2,
+          phaseY: Math.random() * Math.PI * 2,
+          freqX: IDLE_FREQ_BASE * (0.7 + Math.random() * 0.6),
+          freqY: IDLE_FREQ_BASE * (0.7 + Math.random() * 0.6),
+          amp: IDLE_AMP_BASE * (0.6 + Math.random() * 0.8),
         });
       }
     }
@@ -66,6 +80,8 @@ export function NeuralBackground() {
     function step() {
       if (!ctx) return;
       ctx.clearRect(0, 0, width, height);
+
+      const t = performance.now() / 1000;
 
       for (const n of nodes) {
         if (mouse.active) {
@@ -78,9 +94,12 @@ export function NeuralBackground() {
             n.vy += dy * MOUSE_PULL;
           }
         } else {
-          // Resorte de vuelta al punto de origen
-          n.vx += (n.ox - n.x) * RETURN_PULL;
-          n.vy += (n.oy - n.y) * RETURN_PULL;
+          // Target ambiente: órbita lenta alrededor del origen con fase propia.
+          // Así cada nodo se mueve solo y el conjunto respira.
+          const targetX = n.ox + Math.sin(t * n.freqX + n.phaseX) * n.amp;
+          const targetY = n.oy + Math.cos(t * n.freqY + n.phaseY) * n.amp;
+          n.vx += (targetX - n.x) * RETURN_PULL;
+          n.vy += (targetY - n.y) * RETURN_PULL;
         }
 
         n.x += n.vx;

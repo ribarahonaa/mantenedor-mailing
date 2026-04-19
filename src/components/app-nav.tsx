@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Newspaper, Puzzle } from "lucide-react";
+import { Newspaper, Puzzle, Shield, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -24,6 +24,18 @@ const NAV_ITEMS: NavItem[] = [
     href: "/master-sections",
     label: "Secciones maestras",
     icon: Puzzle,
+    adminOnly: true,
+  },
+  {
+    href: "/admin/newsletters",
+    label: "Todos los newsletters",
+    icon: Shield,
+    adminOnly: true,
+  },
+  {
+    href: "/admin/stats",
+    label: "Estadísticas",
+    icon: BarChart3,
     adminOnly: true,
   },
 ];

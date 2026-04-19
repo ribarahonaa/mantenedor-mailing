@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, LogIn, UserPlus, KeyRound, ArrowLeft, Copy, Link2, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NeuralBackground } from "@/components/neural-background";
 
 type Panel = "login" | "register" | "forgot" | "result";
 
@@ -87,7 +88,8 @@ export default function LoginPage() {
             "radial-gradient(600px 400px at 20% 20%, rgba(255,255,255,0.18), transparent 60%), radial-gradient(500px 400px at 85% 80%, rgba(255,255,255,0.12), transparent 60%), linear-gradient(135deg, #4f46e5 0%, #6366f1 40%, #8b5cf6 100%)",
         }}
       >
-        <div className="relative max-w-md space-y-6">
+        <NeuralBackground />
+        <div className="relative z-10 max-w-md space-y-6">
           <div className="inline-flex items-center gap-3 text-lg font-semibold">
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/20 bg-white/15 backdrop-blur">
               <Mail className="h-5 w-5" />
@@ -105,7 +107,7 @@ export default function LoginPage() {
             {[
               "Secciones maestras reutilizables",
               "Editor tipo papel con drag & drop",
-              "Vista previa escritorio / móvil",
+              "Vista previa y copiar HTML",
             ].map((t) => (
               <li key={t} className="flex items-center gap-3 text-white/92">
                 <CheckCircle2 className="h-5 w-5 shrink-0" />

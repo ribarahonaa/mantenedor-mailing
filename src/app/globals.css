@@ -47,3 +47,50 @@ body {
         var(--color-bg);
     font-feature-settings: "cv11", "ss01";
 }
+
+/* ==================== react-day-picker theme ==================== */
+.rdp-themed {
+    --rdp-accent-color: var(--color-accent);
+    --rdp-accent-background-color: var(--color-accent-soft);
+    --rdp-background-color: var(--color-surface);
+    --rdp-day_button-border-radius: 6px;
+    --rdp-selected-border: 2px solid var(--color-accent);
+    --rdp-disabled-opacity: 0.3;
+    --rdp-today-color: var(--color-accent);
+    color: var(--color-text);
+    font-size: 13px;
+}
+
+.rdp-themed .rdp-day_button {
+    color: var(--color-text);
+}
+
+.rdp-themed .rdp-day.rdp-disabled .rdp-day_button {
+    color: var(--color-text-subtle);
+    opacity: 0.35;
+    text-decoration: line-through;
+    cursor: not-allowed;
+}
+
+.rdp-themed .rdp-day.rdp-outside .rdp-day_button {
+    color: var(--color-text-subtle);
+    opacity: 0.5;
+}
+
+.rdp-themed .rdp-nav_button,
+.rdp-themed .rdp-chevron {
+    color: var(--color-text-muted);
+}
+
+.rdp-themed .rdp-month_caption {
+    color: var(--color-text);
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.rdp-themed .rdp-weekday {
+    color: var(--color-text-subtle);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 10px;
+}

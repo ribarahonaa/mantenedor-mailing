@@ -1,8 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
+import { DateInput } from "@/components/date-input";
+import { UserSelect, type UserOption } from "@/components/user-select";
 
 type Defaults = {
   name?: string;
@@ -22,14 +24,21 @@ export function FilterForm({
   users: { username: string; email: string }[];
   hasActive: boolean;
 }) {
+  const router = useRouter();
+  const [name, setName] = useState(defaults.name ?? "");
+  const [username, setUsername] = useState(defaults.username ?? "");
   const [createdFrom, setCreatedFrom] = useState(defaults.createdFrom ?? "");
   const [createdTo, setCreatedTo] = useState(defaults.createdTo ?? "");
   const [updatedFrom, setUpdatedFrom] = useState(defaults.updatedFrom ?? "");
   const [updatedTo, setUpdatedTo] = useState(defaults.updatedTo ?? "");
 
-  // Al elegir "Desde": si "Hasta" está vacío o quedó antes del nuevo "Desde",
-  // lo seteamos al mismo valor. Si "Hasta" ya tiene una fecha posterior válida,
-  // la respetamos.
+  const userOptions: UserOption[] = users.map((u) => ({
+    value: u.username,
+    label: u.username,
+    email: u.email,
+  }));
+
+  // Al elegir "Desde": si "Hasta" está vacío o antes del nuevo valor, lo alineamos.
   function handleFromChange(
     value: string,
     currentTo: string,
@@ -42,12 +51,21 @@ export function FilterForm({
     }
   }
 
-  const input =
-    "w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm transition focus:outline-none focus:border-[var(--color-accent)] focus:ring-3 focus:ring-[var(--color-accent-ring)]";
-  const labelCls = "block space-y-1";
+  function handleClear() {
+    setName("");
+    setUsername("");
+    setCreatedFrom("");
+    setCreatedTo("");
+    setUpdatedFrom("");
+    setUpdatedTo("");
+    router.push("/admin/newsletters");
+  }
+
   const spanCls =
     "text-xs font-semibold uppercase tracking-wider text-[var(--color-text-subtle)]";
   const miniCls = "text-[11px] text-[var(--color-text-subtle)]";
+  const textInput =
+    "w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm transition focus:outline-none focus:border-[var(--color-accent)] focus:ring-3 focus:ring-[var(--color-accent-ring)]";
 
   return (
     <form
@@ -59,91 +77,78 @@ export function FilterForm({
       <input type="hidden" name="page" value="1" />
 
       <div className="grid gap-3 md:grid-cols-3">
-        <label className={labelCls}>
+        <label className="block space-y-1">
           <span className={spanCls}>Nombre</span>
           <input
             name="name"
-            defaultValue={defaults.name ?? ""}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             placeholder="Contiene…"
-            className={input}
+            className={textInput}
           />
         </label>
 
-        <label className={labelCls}>
+        <div className="space-y-1">
           <span className={spanCls}>Usuario</span>
-          <select
+          <UserSelect
             name="username"
-            defaultValue={defaults.username ?? ""}
-            className={input}
-          >
-            <option value="">Todos</option>
-            {users.map((u) => (
-              <option key={u.username} value={u.username}>
-                {u.username} · {u.email}
-              </option>
-            ))}
-          </select>
-        </label>
+            value={username}
+            onChange={setUsername}
+            options={userOptions}
+          />
+        </div>
 
         <div className="hidden md:block" />
 
         <div className="space-y-1">
           <span className={spanCls}>Creado</span>
           <div className="grid grid-cols-2 gap-2">
-            <label className="space-y-1">
+            <div className="space-y-1">
               <span className={miniCls}>Desde</span>
-              <input
-                type="date"
+              <DateInput
                 name="createdFrom"
                 value={createdFrom}
                 max={createdTo || undefined}
-                onChange={(e) =>
-                  handleFromChange(e.target.value, createdTo, setCreatedFrom, setCreatedTo)
+                onChange={(v) =>
+                  handleFromChange(v, createdTo, setCreatedFrom, setCreatedTo)
                 }
-                className={input}
               />
-            </label>
-            <label className="space-y-1">
+            </div>
+            <div className="space-y-1">
               <span className={miniCls}>Hasta</span>
-              <input
-                type="date"
+              <DateInput
                 name="createdTo"
                 value={createdTo}
                 min={createdFrom || undefined}
-                onChange={(e) => setCreatedTo(e.target.value)}
-                className={input}
+                onChange={setCreatedTo}
               />
-            </label>
+            </div>
           </div>
         </div>
 
         <div className="space-y-1">
           <span className={spanCls}>Actualizado</span>
           <div className="grid grid-cols-2 gap-2">
-            <label className="space-y-1">
+            <div className="space-y-1">
               <span className={miniCls}>Desde</span>
-              <input
-                type="date"
+              <DateInput
                 name="updatedFrom"
                 value={updatedFrom}
                 max={updatedTo || undefined}
-                onChange={(e) =>
-                  handleFromChange(e.target.value, updatedTo, setUpdatedFrom, setUpdatedTo)
+                onChange={(v) =>
+                  handleFromChange(v, updatedTo, setUpdatedFrom, setUpdatedTo)
                 }
-                className={input}
               />
-            </label>
-            <label className="space-y-1">
+            </div>
+            <div className="space-y-1">
               <span className={miniCls}>Hasta</span>
-              <input
-                type="date"
+              <DateInput
                 name="updatedTo"
                 value={updatedTo}
                 min={updatedFrom || undefined}
-                onChange={(e) => setUpdatedTo(e.target.value)}
-                className={input}
+                onChange={setUpdatedTo}
               />
-            </label>
+            </div>
           </div>
         </div>
 
@@ -155,12 +160,13 @@ export function FilterForm({
             <Search className="h-4 w-4" /> Aplicar
           </button>
           {hasActive && (
-            <Link
-              href="/admin/newsletters"
+            <button
+              type="button"
+              onClick={handleClear}
               className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:border-[var(--color-border-strong)] hover:text-[var(--color-text)]"
             >
               <X className="h-3.5 w-3.5" /> Limpiar
-            </Link>
+            </button>
           )}
         </div>
       </div>

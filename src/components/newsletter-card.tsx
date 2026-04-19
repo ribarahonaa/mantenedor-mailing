@@ -48,8 +48,8 @@ export function NewsletterCard(props: Props) {
   return (
     <article
       className={cn(
-        "relative flex flex-col gap-4 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs",
-        "transition hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] hover:shadow-md",
+        "card-surface relative flex flex-col gap-4 overflow-hidden rounded-xl border border-[var(--color-border)] p-5",
+        "hover:-translate-y-0.5 hover:border-[var(--color-accent-soft)]",
         pending && "pointer-events-none opacity-60"
       )}
     >

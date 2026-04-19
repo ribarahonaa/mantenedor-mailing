@@ -29,7 +29,7 @@ export function NewNewsletterButton({
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "inline-flex items-center gap-2 rounded-lg bg-[var(--color-accent)] text-sm font-semibold text-white transition hover:bg-[var(--color-accent-hover)]",
+          "btn-primary inline-flex items-center gap-2 rounded-lg text-sm font-semibold",
           variant === "primary" ? "px-4 py-2" : "mt-4 px-4 py-2"
         )}
       >

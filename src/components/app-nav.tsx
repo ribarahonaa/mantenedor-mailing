@@ -62,14 +62,21 @@ export function AppNav({ role }: { role: "admin" | "user" }) {
               key={item.href}
               href={item.href}
               className={cn(
-                "inline-flex h-full items-center gap-2 whitespace-nowrap border-b-2 px-4 text-sm font-medium transition",
+                "relative inline-flex h-full items-center gap-2 whitespace-nowrap border-b-2 px-4 text-sm font-medium transition",
                 isActive
                   ? "border-[var(--color-accent)] text-[var(--color-accent)]"
                   : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
               )}
             >
-              <Icon className="h-4 w-4" />
-              {item.label}
+              {isActive && (
+                <span
+                  aria-hidden
+                  className="absolute inset-x-2 inset-y-2 rounded-md"
+                  style={{ background: "var(--gradient-accent-soft)" }}
+                />
+              )}
+              <Icon className="relative z-10 h-4 w-4" />
+              <span className="relative z-10">{item.label}</span>
             </Link>
           );
         })}

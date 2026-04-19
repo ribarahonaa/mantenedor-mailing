@@ -119,7 +119,7 @@ function StatCard({
   highlight?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+    <div className="card-surface rounded-xl border border-[var(--color-border)] p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-subtle)]">
@@ -162,7 +162,7 @@ function LeaderboardCard({
   const visible = rows.filter((r) => r.count > 0);
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+    <div className="card-surface rounded-xl border border-[var(--color-border)] p-5">
       <header className="mb-4 flex items-center gap-3">
         <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
           <Icon className="h-4 w-4" />

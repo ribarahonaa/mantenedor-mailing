@@ -21,7 +21,7 @@ export function SectionsDonut({ data }: { data: Slice[] }) {
   const total = data.reduce((s, r) => s + r.count, 0);
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+    <div className="card-surface rounded-xl border border-[var(--color-border)] p-5">
       <header className="mb-4">
         <h2 className="text-base font-semibold tracking-tight">
           Distribución por tipo

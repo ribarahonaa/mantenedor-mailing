@@ -68,8 +68,8 @@ export default async function AdminNewslettersPage({
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xs">
-            <table className="w-full text-sm">
+          <div className="card-surface overflow-x-auto rounded-xl border border-[var(--color-border)]">
+            <table className="table-rich w-full text-sm">
               <thead className="bg-[var(--color-surface-3)] text-left text-xs font-semibold uppercase tracking-wider text-[var(--color-text-subtle)]">
                 <tr>
                   <th className="px-4 py-3">Nombre</th>
@@ -84,7 +84,7 @@ export default async function AdminNewslettersPage({
                 {rows.map((r) => (
                   <tr
                     key={r.id}
-                    className="border-t border-[var(--color-border)] transition hover:bg-[var(--color-surface-2)]"
+                    className="border-t border-[var(--color-border)] transition"
                   >
                     <td className="px-4 py-3">
                       <div className="font-medium">{r.name}</div>

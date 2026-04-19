@@ -155,7 +155,7 @@ export function FilterForm({
         <div className="flex items-end gap-2">
           <button
             type="submit"
-            className="inline-flex items-center gap-2 rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-accent-hover)]"
+            className="btn-primary inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold"
           >
             <Search className="h-4 w-4" /> Aplicar
           </button>

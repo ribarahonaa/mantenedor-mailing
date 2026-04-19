@@ -30,7 +30,7 @@ export function ActivityChart({ data }: { data: Point[] }) {
   const empty = total === 0;
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+    <div className="card-surface rounded-xl border border-[var(--color-border)] p-5">
       <header className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold tracking-tight">Actividad</h2>

@@ -1,8 +1,13 @@
 import Link from "next/link";
-import { FileText, Search, User, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { listAllNewsletters, type NewsletterFilters } from "@/lib/actions/admin";
+import { FileText, User, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  listAllNewsletters,
+  listUsernamesForAdmin,
+  type NewsletterFilters,
+} from "@/lib/actions/admin";
 import { ViewHeader } from "@/components/view-header";
 import { AdminPreviewButton } from "./preview-button";
+import { FilterForm } from "./filter-form";
 
 type SearchParams = {
   name?: string;
@@ -31,7 +36,10 @@ export default async function AdminNewslettersPage({
     page: sp.page ? Number(sp.page) : 1,
   };
 
-  const { rows, total, page, pageSize } = await listAllNewsletters(filters);
+  const [{ rows, total, page, pageSize }, users] = await Promise.all([
+    listAllNewsletters(filters),
+    listUsernamesForAdmin(),
+  ]);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const hasActiveFilters = Boolean(
     sp.name || sp.username || sp.createdFrom || sp.createdTo || sp.updatedFrom || sp.updatedTo
@@ -48,7 +56,7 @@ export default async function AdminNewslettersPage({
         Vista de administrador. Muestra los newsletters de todos los usuarios. Solo lectura.
       </p>
 
-      <FilterForm defaults={sp} hasActive={hasActiveFilters} />
+      <FilterForm defaults={sp} users={users} hasActive={hasActiveFilters} />
 
       {rows.length === 0 ? (
         <div className="rounded-xl border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-2)] p-12 text-center">
@@ -131,107 +139,6 @@ export default async function AdminNewslettersPage({
         </>
       )}
     </div>
-  );
-}
-
-function FilterForm({
-  defaults,
-  hasActive,
-}: {
-  defaults: SearchParams;
-  hasActive: boolean;
-}) {
-  const input =
-    "w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm transition focus:outline-none focus:border-[var(--color-accent)] focus:ring-3 focus:ring-[var(--color-accent-ring)]";
-  const label = "block space-y-1";
-  const span = "text-xs font-semibold uppercase tracking-wider text-[var(--color-text-subtle)]";
-
-  return (
-    <form
-      action="/admin/newsletters"
-      method="get"
-      className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-xs"
-    >
-      {/* Reset página al aplicar filtros */}
-      <input type="hidden" name="page" value="1" />
-
-      <div className="grid gap-3 md:grid-cols-3">
-        <label className={label}>
-          <span className={span}>Nombre</span>
-          <input
-            name="name"
-            defaultValue={defaults.name ?? ""}
-            placeholder="Contiene…"
-            className={input}
-          />
-        </label>
-
-        <label className={label}>
-          <span className={span}>Usuario</span>
-          <input
-            name="username"
-            defaultValue={defaults.username ?? ""}
-            placeholder="Contiene…"
-            className={input}
-          />
-        </label>
-
-        <div className="md:col-span-1" />
-
-        <div className="space-y-1">
-          <span className={span}>Creado</span>
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              type="date"
-              name="createdFrom"
-              defaultValue={defaults.createdFrom ?? ""}
-              className={input}
-            />
-            <input
-              type="date"
-              name="createdTo"
-              defaultValue={defaults.createdTo ?? ""}
-              className={input}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1">
-          <span className={span}>Actualizado</span>
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              type="date"
-              name="updatedFrom"
-              defaultValue={defaults.updatedFrom ?? ""}
-              className={input}
-            />
-            <input
-              type="date"
-              name="updatedTo"
-              defaultValue={defaults.updatedTo ?? ""}
-              className={input}
-            />
-          </div>
-        </div>
-
-        <div className="flex items-end gap-2">
-          <button
-            type="submit"
-            className="inline-flex items-center gap-2 rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-accent-hover)]"
-          >
-            <Search className="h-4 w-4" /> Aplicar
-          </button>
-          {hasActive && (
-            <Link
-              href="/admin/newsletters"
-              className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:border-[var(--color-border-strong)] hover:text-[var(--color-text)]"
-            >
-              <X className="h-3.5 w-3.5" /> Limpiar
-            </Link>
-          )}
-        </div>
-      </div>
-    </form>
   );
 }
 

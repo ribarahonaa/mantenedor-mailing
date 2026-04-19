@@ -63,7 +63,7 @@ export async function listAllNewsletters(
     conditions.push(like(sql`lower(${schema.newsletters.name})`, `%${name.toLowerCase()}%`));
   }
   if (username) {
-    conditions.push(like(sql`lower(${schema.users.username})`, `%${username.toLowerCase()}%`));
+    conditions.push(eq(schema.users.username, username));
   }
   if (filters.createdFrom) {
     conditions.push(gte(schema.newsletters.createdAt, filters.createdFrom));
@@ -113,6 +113,23 @@ export async function listAllNewsletters(
     page,
     pageSize,
   };
+}
+
+/**
+ * Lista usuarios del sistema para poblar el selector de filtro.
+ * Solo admin. Devuelve username + email ordenado alfabéticamente.
+ */
+export async function listUsernamesForAdmin() {
+  await requireAdmin();
+  return db
+    .select({
+      username: schema.users.username,
+      email: schema.users.email,
+    })
+    .from(schema.users)
+    .where(eq(schema.users.isActive, true))
+    .orderBy(asc(schema.users.username))
+    .all();
 }
 
 export type AdminStats = {

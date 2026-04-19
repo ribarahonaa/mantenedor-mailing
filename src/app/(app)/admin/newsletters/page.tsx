@@ -1,6 +1,7 @@
 import { FileText, User } from "lucide-react";
 import { listAllNewsletters } from "@/lib/actions/admin";
 import { ViewHeader } from "@/components/view-header";
+import { AdminPreviewButton } from "./preview-button";
 
 export default async function AdminNewslettersPage() {
   const rows = await listAllNewsletters();
@@ -29,6 +30,7 @@ export default async function AdminNewslettersPage() {
                 <th className="px-4 py-3">Usuario</th>
                 <th className="px-4 py-3">Bloques</th>
                 <th className="px-4 py-3">Actualizado</th>
+                <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -66,6 +68,9 @@ export default async function AdminNewslettersPage() {
                   </td>
                   <td className="px-4 py-3 text-[var(--color-text-muted)]">
                     {formatDate(r.updatedAt)}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <AdminPreviewButton id={r.id} name={r.name} />
                   </td>
                 </tr>
               ))}

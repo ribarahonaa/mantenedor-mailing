@@ -1,4 +1,4 @@
-import { Users, Newspaper, Puzzle, Blocks, Trophy, Flame } from "lucide-react";
+import { Users, Newspaper, Puzzle, Trophy, Flame } from "lucide-react";
 import { getAdminStats } from "@/lib/actions/admin";
 import { ViewHeader } from "@/components/view-header";
 
@@ -9,7 +9,7 @@ export default async function AdminStatsPage() {
     <div className="space-y-6">
       <ViewHeader title="Estadísticas" />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
           icon={Users}
           label="Usuarios"
@@ -27,12 +27,6 @@ export default async function AdminStatsPage() {
           label="Secciones maestras activas"
           value={stats.totals.activeMasterSections}
           tone="success"
-        />
-        <StatCard
-          icon={Blocks}
-          label="Bloques en uso"
-          value={stats.totals.blocksInUse}
-          tone="warning"
         />
       </div>
 
@@ -69,7 +63,6 @@ const toneStyles = {
   accent: "bg-[var(--color-accent-soft)] text-[var(--color-accent)]",
   info: "bg-[var(--color-info-soft)] text-[var(--color-info)]",
   success: "bg-[var(--color-success-soft)] text-[var(--color-success)]",
-  warning: "bg-[var(--color-warning-soft)] text-[var(--color-warning)]",
 } as const;
 
 function StatCard({

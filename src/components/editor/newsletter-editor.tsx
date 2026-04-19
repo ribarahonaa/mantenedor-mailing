@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Modal } from "@/components/modal";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { HtmlEditor } from "@/components/html-editor";
+import { buildFullHtml } from "@/lib/newsletter-html";
 import {
   addSectionToNewsletter,
   reorderSections,
@@ -195,31 +196,12 @@ export function NewsletterEditor({
     });
   }
 
-  function buildFullHtml() {
-    const body = sections.map((s) => s.content.html).join("\n");
-    return `<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(newsletterName)}</title>
-</head>
-<body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f4f4;">
-<tr><td align="center" style="padding:20px 0;">
-<table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background:#ffffff;max-width:600px;">
-<tr><td>
-${body}
-</td></tr>
-</table>
-</td></tr>
-</table>
-</body>
-</html>`;
+  function buildHtml() {
+    return buildFullHtml(newsletterName, sections.map((s) => s.content.html));
   }
 
   async function handleCopyHtml() {
-    const html = buildFullHtml();
+    const html = buildHtml();
     try {
       await navigator.clipboard.writeText(html);
       setCopied(true);
@@ -432,7 +414,7 @@ ${body}
       {/* Modal de vista previa del mailing completo */}
       {previewOpen && (
         <PreviewModal
-          html={buildFullHtml()}
+          html={buildHtml()}
           onClose={() => setPreviewOpen(false)}
           onCopy={handleCopyHtml}
           copied={copied}
@@ -453,14 +435,6 @@ ${body}
 }
 
 // ==================== Subcomponents ====================
-
-function escapeHtml(str: string) {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
 
 function DropLine() {
   return (

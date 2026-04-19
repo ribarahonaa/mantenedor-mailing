@@ -1,8 +1,9 @@
 "use server";
 
-import { desc, eq, sql } from "drizzle-orm";
+import { asc, desc, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
+import type { SectionContent } from "@/lib/db/schema";
 
 /**
  * Lista todos los newsletters del sistema con el nombre del owner
@@ -33,7 +34,6 @@ export type AdminStats = {
     users: number;
     newsletters: number;
     activeMasterSections: number;
-    blocksInUse: number;
   };
   topUsers: { username: string; email: string; count: number }[];
   topMasterSections: { id: number; name: string; type: string; count: number }[];
@@ -59,11 +59,6 @@ export async function getAdminStats(): Promise<AdminStats> {
     .select({ n: sql<number>`count(*)` })
     .from(schema.masterSections)
     .where(eq(schema.masterSections.isActive, true))
-    .all();
-
-  const [blocksCount] = await db
-    .select({ n: sql<number>`count(*)` })
-    .from(schema.newsletterSections)
     .all();
 
   const topUsers = await db
@@ -102,7 +97,6 @@ export async function getAdminStats(): Promise<AdminStats> {
       users: Number(usersCount.n ?? 0),
       newsletters: Number(newslettersCount.n ?? 0),
       activeMasterSections: Number(activeMastersCount.n ?? 0),
-      blocksInUse: Number(blocksCount.n ?? 0),
     },
     topUsers: topUsers.map((u) => ({
       username: u.username,
@@ -115,5 +109,34 @@ export async function getAdminStats(): Promise<AdminStats> {
       type: m.type,
       count: Number(m.count ?? 0),
     })),
+  };
+}
+
+/**
+ * Trae los datos necesarios para previsualizar un newsletter en la vista admin.
+ * Retorna nombre + HTML en orden de cada sección. Solo admin.
+ */
+export async function getNewsletterForAdmin(
+  id: number
+): Promise<{ name: string; sectionsHtml: string[] } | null> {
+  await requireAdmin();
+  const newsletter = await db
+    .select({ id: schema.newsletters.id, name: schema.newsletters.name })
+    .from(schema.newsletters)
+    .where(eq(schema.newsletters.id, id))
+    .get();
+
+  if (!newsletter) return null;
+
+  const rows = await db
+    .select({ content: schema.newsletterSections.content })
+    .from(schema.newsletterSections)
+    .where(eq(schema.newsletterSections.newsletterId, newsletter.id))
+    .orderBy(asc(schema.newsletterSections.sectionOrder))
+    .all();
+
+  return {
+    name: newsletter.name,
+    sectionsHtml: rows.map((r) => (r.content as SectionContent).html ?? ""),
   };
 }
